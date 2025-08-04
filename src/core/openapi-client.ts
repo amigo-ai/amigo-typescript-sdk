@@ -1,5 +1,5 @@
 import createClient, { Middleware, type Client } from 'openapi-fetch'
-import { HttpError } from './errors'
+import { createApiError, NetworkError, ParseError, ConfigurationError } from './errors'
 import { createAuthMiddleware } from './auth'
 import type { paths } from '../generated/api-types'
 import type { AmigoSdkConfig } from '..'
@@ -7,6 +7,20 @@ import type { AmigoSdkConfig } from '..'
 export type AmigoFetch = Client<paths>
 
 export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
+  // Validate configuration
+  if (!config.apiKey) {
+    throw new ConfigurationError('API key is required', 'apiKey')
+  }
+  if (!config.apiKeyId) {
+    throw new ConfigurationError('API key ID is required', 'apiKeyId')
+  }
+  if (!config.userId) {
+    throw new ConfigurationError('User ID is required', 'userId')
+  }
+  if (!config.orgId) {
+    throw new ConfigurationError('Organization ID is required', 'orgId')
+  }
+
   if (!config.baseUrl) {
     config.baseUrl = 'https://api.amigo.ai/v1'
   }
@@ -21,12 +35,31 @@ export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
   const errorMw: Middleware = {
     async onResponse({ response }) {
       if (!response.ok) {
-        const body = await response
-          .clone()
-          .text()
-          .catch(() => '')
-        throw new HttpError(response.status, body)
+        let body: unknown
+        try {
+          const text = await response.clone().text()
+          try {
+            body = text ? JSON.parse(text) : undefined
+          } catch {
+            body = text
+          }
+        } catch (err) {
+          throw new ParseError(
+            'Failed to parse error response',
+            'response',
+            err instanceof Error ? err : new Error(String(err))
+          )
+        }
+
+        throw createApiError(response, body)
       }
+    },
+    async onError({ error }) {
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new NetworkError('Network request failed', error)
+      }
+      throw error
     },
   }
   client.use(errorMw)
