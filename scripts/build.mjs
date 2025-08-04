@@ -14,4 +14,4 @@ await build({
   sourcemap: true,
 })
 
-console.log('✨ esbuild complete')
+console.log('✨ Esbuild complete')

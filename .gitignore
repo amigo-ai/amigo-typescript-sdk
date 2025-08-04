@@ -73,3 +73,6 @@ __snapshots__/
 .next/                 # Next.js
 .storybook-static/     # Storybook
 .Docusaurus/           # Docusaurus v2 cache
+
+# OpenAPI code-gen
+src/generated/
