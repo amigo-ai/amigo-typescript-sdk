@@ -8,3 +8,13 @@ export class HttpError extends AmigoError {
     super(`HTTP ${status}`)
   }
 }
+
+export class AuthError extends AmigoError {
+  constructor(
+    message: string,
+    public cause?: unknown
+  ) {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
