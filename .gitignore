@@ -1,0 +1,75 @@
+############################################
+#  Core Node / TypeScript build artifacts  #
+############################################
+node_modules/
+dist/
+build/
+*.tsbuildinfo            # incremental tsc cache
+.eslintcache
+.nyc_output/             # coverage (nyc / istanbul)
+coverage/
+*.log
+*.log.*
+
+############################################
+#  Environment & secrets                   #
+############################################
+.env
+.env.*
+!.env.example            # keep a template if you want
+
+############################################
+#  Editor / IDE cruft                      #
+############################################
+# macOS / Linux
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VSCode
+.vscode/*
+!.vscode/settings.json   # allow recommended settings
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# JetBrains IDEs
+.idea/
+
+# Others (Sublime, etc.)
+*.sublime*
+*.swp
+*.swo
+
+############################################
+#  Temporary tooling caches                #
+############################################
+.pnpm-debug.log
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# esbuild’s metadata file (when enabled)
+esbuild.metadata.json
+
+# Prettier
+.prettier/*
+
+# Optional: test snapshots
+__snapshots__/
+
+############################################
+#  Docs / site builders (if used)          #
+############################################
+.next/                 # Next.js
+.storybook-static/     # Storybook
+.Docusaurus/           # Docusaurus v2 cache
