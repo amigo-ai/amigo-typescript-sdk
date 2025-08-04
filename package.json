@@ -2,19 +2,24 @@
   "name": "@amigo/amigo-typescript-sdk",
   "version": "1.0.0",
   "description": "Amigo TypeScript SDK",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "gen-types": "node scripts/gen-types.mjs",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node scripts/gen-types.mjs && node scripts/build.mjs && tsc",
-    "dev": "node scripts/gen-types.mjs && node scripts/build.mjs --watch",
+    "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc",
+    "dev": "node scripts/gen.mjs && node scripts/build.mjs --watch",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings 0"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./types": "./dist/types/index.d.ts",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "type": "module",
@@ -37,5 +42,8 @@
     "openapi-typescript": "^7.8.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.14.0"
   }
 }

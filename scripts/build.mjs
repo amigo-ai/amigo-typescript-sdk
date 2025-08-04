@@ -10,8 +10,9 @@ await build({
   format: 'esm',
   platform: 'neutral',
   target: 'es2020',
-  minify: true,
+  minify: false,
   sourcemap: true,
+  external: ['openapi-fetch'], // keep small, let consumer install once
 })
 
 console.log('✨ Esbuild complete')
