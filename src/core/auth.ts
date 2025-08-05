@@ -30,9 +30,14 @@ export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWith
 
       const error = createApiError(response, body)
 
-      // If it's a 401, convert to more specific authentication error
+      // For 401s, enhance the error message but preserve all the original details
       if (response.status === 401) {
-        throw new AuthenticationError('Failed to authenticate with API key', 'invalid_token')
+        throw new AuthenticationError(`Failed to authenticate with API key: ${error.message}`, {
+          statusCode: error.statusCode,
+          errorCode: error.errorCode,
+          context: error.context,
+          cause: error,
+        })
       }
 
       throw error
@@ -101,7 +106,10 @@ export function createAuthMiddleware(config: AmigoSdkConfig): Middleware {
         if (error instanceof AuthenticationError) {
           throw error
         }
-        throw new AuthenticationError('Failed to obtain bearer token', 'invalid_token')
+        throw new AuthenticationError('Failed to obtain bearer token', {
+          errorCode: 'invalid_token',
+          cause: error,
+        })
       }
       return request
     },
@@ -115,10 +123,10 @@ export function createAuthMiddleware(config: AmigoSdkConfig): Middleware {
       token = null
       // Wrap network errors in authentication context
       if (error instanceof NetworkError) {
-        throw new AuthenticationError(
-          'Network error while authenticating with Amigo API',
-          'missing_credentials'
-        )
+        throw new AuthenticationError('Network error while authenticating with Amigo API', {
+          errorCode: 'missing_credentials',
+          cause: error,
+        })
       }
       // Pass through other error types
       throw error

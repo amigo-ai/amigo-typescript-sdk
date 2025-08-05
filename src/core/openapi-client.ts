@@ -6,6 +6,16 @@ import type { AmigoSdkConfig } from '..'
 
 export type AmigoFetch = Client<paths>
 
+// Type helper to extract the data type from openapi-fetch responses
+type ExtractDataType<T> = T extends { data?: infer D } ? D : never
+
+// Helper function to extract data from openapi-fetch responses
+// Since our middleware throws on errors, successful responses will have data
+export async function extractData<T>(responsePromise: Promise<T>): Promise<ExtractDataType<T>> {
+  const result = await responsePromise
+  return (result as any).data
+}
+
 export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
   // Validate configuration
   if (!config.apiKey) {
@@ -22,7 +32,7 @@ export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
   }
 
   if (!config.baseUrl) {
-    config.baseUrl = 'https://api.amigo.ai/v1'
+    config.baseUrl = 'https://api.amigo.ai'
   }
 
   const client = createClient<paths>({
