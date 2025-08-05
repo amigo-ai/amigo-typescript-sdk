@@ -1,29 +1,72 @@
 import { Middleware } from 'openapi-fetch'
 import { components } from '../generated/api-types'
 import { AmigoSdkConfig } from '..'
-import { AuthError } from './errors'
+import { AmigoError, AuthenticationError, NetworkError, ParseError, createApiError } from './errors'
 
 type SignInWithApiKeyResponse =
   components['schemas']['src__app__endpoints__user__sign_in_with_api_key__Response']
 
 /** Helper function to trade API key for a bearer token */
 export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWithApiKeyResponse> {
-  const response = await fetch(`${config.baseUrl}/v1/${config.orgId}/user/signin_with_api_key`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': config.apiKey,
-      'x-api-key-id': config.apiKeyId,
-      'x-user-id': config.userId,
-    },
-  })
+  const url = `${config.baseUrl}/v1/${config.orgId}/user/signin_with_api_key`
 
-  if (!response.ok) {
-    throw new Error('Failed to sign in with API key')
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey,
+        'x-api-key-id': config.apiKeyId,
+        'x-user-id': config.userId,
+      },
+    })
+
+    if (!response.ok) {
+      const body = await parseResponseBody(response)
+      const apiError = createApiError(response, body)
+
+      // Enhance authentication errors with additional context
+      if (response.status === 401) {
+        throw new AuthenticationError(`Authentication failed: ${apiError.message}`, {
+          ...apiError,
+          context: { ...apiError.context, endpoint: 'signin_with_api_key' },
+        })
+      }
+      throw apiError
+    }
+
+    return (await response.json()) as SignInWithApiKeyResponse
+  } catch (err) {
+    // Re-throw our custom errors as-is
+    if (err instanceof AmigoError) {
+      throw err
+    }
+
+    // Handle network errors
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new NetworkError('Failed to connect to authentication endpoint', err, {
+        url,
+        method: 'POST',
+      })
+    }
+
+    // Handle JSON parsing errors
+    throw new ParseError(
+      'Failed to parse authentication response',
+      'json',
+      err instanceof Error ? err : new Error(String(err))
+    )
   }
+}
 
-  const data = (await response.json()) as SignInWithApiKeyResponse
-  return data
+// Helper function to safely parse response bodies
+async function parseResponseBody(response: Response): Promise<unknown> {
+  try {
+    const text = await response.text()
+    return text ? JSON.parse(text) : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export function createAuthMiddleware(config: AmigoSdkConfig): Middleware {
@@ -60,30 +103,29 @@ export function createAuthMiddleware(config: AmigoSdkConfig): Middleware {
   return {
     onRequest: async ({ request }) => {
       try {
-        debugger
         const validToken = await ensureValidToken()
         if (validToken?.id_token) {
           request.headers.set('Authorization', `Bearer ${validToken.id_token}`)
         }
       } catch (error) {
-        throw new AuthError('Failed to obtain Amigo auth token', error)
+        // Clear token and re-throw - getBearerToken already provides proper error types
+        token = null
+        throw error
       }
       return request
     },
+
     onResponse: async ({ response }) => {
-      // Handle 401 responses by clearing token to force refresh
+      // Handle 401 responses by clearing token to force refresh on next request
       if (response.status === 401) {
         token = null
       }
     },
+
     onError: async ({ error }) => {
+      // Clear token on any error to force refresh
       token = null
-      // Wrap or re-throw so callers see a consistent error family
-      if (error instanceof AuthError) {
-        // already typed
-        return error
-      }
-      return new AuthError('Network error while contacting Amigo API', error)
+      throw error
     },
   }
 }

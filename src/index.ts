@@ -25,3 +25,6 @@ export class AmigoClient {
     this.services = new ServiceResource(api)
   }
 }
+
+// Export all errors as a namespace to avoid polluting the main import space
+export * as errors from './core/errors'
