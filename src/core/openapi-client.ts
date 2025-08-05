@@ -13,7 +13,43 @@ type ExtractDataType<T> = T extends { data?: infer D } ? D : never
 // Since our middleware throws on errors, successful responses will have data
 export async function extractData<T>(responsePromise: Promise<T>): Promise<ExtractDataType<T>> {
   const result = await responsePromise
-  return (result as any).data
+  // openapi-fetch guarantees data exists on successful responses
+  return (result as { data: ExtractDataType<T> }).data
+}
+
+// Utility function to safely parse response bodies
+async function parseResponseBody(response: Response): Promise<unknown> {
+  try {
+    const text = await response.text() // No need to clone since we only read once
+    if (!text) return undefined
+    try {
+      return JSON.parse(text)
+    } catch {
+      return text // Return as string if not valid JSON
+    }
+  } catch (err) {
+    throw new ParseError(
+      'Failed to parse error response',
+      'response',
+      err instanceof Error ? err : new Error(String(err))
+    )
+  }
+}
+
+// Helper to detect network-related errors
+function isNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+
+  return (
+    error instanceof TypeError ||
+    error.message.includes('fetch') ||
+    error.message.includes('Failed to fetch') ||
+    error.message.includes('Network request failed') ||
+    error.message.includes('ECONNREFUSED') ||
+    error.message.includes('ETIMEDOUT') ||
+    error.message.includes('ENOTFOUND') ||
+    error.message.includes('network')
+  )
 }
 
 export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
@@ -39,40 +75,33 @@ export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
     baseUrl: config.baseUrl,
   })
 
-  client.use(createAuthMiddleware(config))
-
-  // Error handling middleware
+  // Apply error handling middleware first (to catch all errors)
   const errorMw: Middleware = {
     async onResponse({ response }) {
       if (!response.ok) {
-        let body: unknown
-        try {
-          const text = await response.clone().text()
-          try {
-            body = text ? JSON.parse(text) : undefined
-          } catch {
-            body = text
-          }
-        } catch (err) {
-          throw new ParseError(
-            'Failed to parse error response',
-            'response',
-            err instanceof Error ? err : new Error(String(err))
-          )
-        }
-
+        const body = await parseResponseBody(response)
         throw createApiError(response, body)
       }
     },
-    async onError({ error }) {
-      // Handle network errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new NetworkError('Network request failed', error)
+    async onError({ error, request }) {
+      // Handle network-related errors consistently
+      if (isNetworkError(error)) {
+        throw new NetworkError(
+          `Network error: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            url: request?.url,
+            method: request?.method,
+          }
+        )
       }
       throw error
     },
   }
   client.use(errorMw)
+
+  // Apply auth middleware after error handling (so auth errors are properly handled)
+  client.use(createAuthMiddleware(config))
 
   return client
 }

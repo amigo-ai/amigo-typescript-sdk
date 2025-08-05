@@ -1,15 +1,17 @@
 import { Middleware } from 'openapi-fetch'
 import { components } from '../generated/api-types'
 import { AmigoSdkConfig } from '..'
-import { AuthenticationError, NetworkError, ParseError, createApiError } from './errors'
+import { AmigoError, AuthenticationError, NetworkError, ParseError, createApiError } from './errors'
 
 type SignInWithApiKeyResponse =
   components['schemas']['src__app__endpoints__user__sign_in_with_api_key__Response']
 
 /** Helper function to trade API key for a bearer token */
 export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWithApiKeyResponse> {
+  const url = `${config.baseUrl}/v1/${config.orgId}/user/signin_with_api_key`
+
   try {
-    const response = await fetch(`${config.baseUrl}/v1/${config.orgId}/user/signin_with_api_key`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -20,47 +22,50 @@ export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWith
     })
 
     if (!response.ok) {
-      let body: unknown
-      try {
-        const text = await response.text()
-        body = text ? JSON.parse(text) : undefined
-      } catch {
-        body = undefined
-      }
+      const body = await parseResponseBody(response)
+      const apiError = createApiError(response, body)
 
-      const error = createApiError(response, body)
-
-      // For 401s, enhance the error message but preserve all the original details
+      // Enhance authentication errors with additional context
       if (response.status === 401) {
-        throw new AuthenticationError(`Failed to authenticate with API key: ${error.message}`, {
-          statusCode: error.statusCode,
-          errorCode: error.errorCode,
-          context: error.context,
-          cause: error,
+        throw new AuthenticationError(`Authentication failed: ${apiError.message}`, {
+          ...apiError,
+          context: { ...apiError.context, endpoint: 'signin_with_api_key' },
         })
       }
-
-      throw error
+      throw apiError
     }
 
-    try {
-      const data = (await response.json()) as SignInWithApiKeyResponse
-      return data
-    } catch (err) {
-      throw new ParseError(
-        'Failed to parse authentication response',
-        'json',
-        err instanceof Error ? err : new Error(String(err))
-      )
-    }
+    return (await response.json()) as SignInWithApiKeyResponse
   } catch (err) {
+    // Re-throw our custom errors as-is
+    if (err instanceof AmigoError) {
+      throw err
+    }
+
+    // Handle network errors
     if (err instanceof TypeError && err.message.includes('fetch')) {
       throw new NetworkError('Failed to connect to authentication endpoint', err, {
-        url: `${config.baseUrl}/v1/${config.orgId}/user/signin_with_api_key`,
+        url,
         method: 'POST',
       })
     }
-    throw err
+
+    // Handle JSON parsing errors
+    throw new ParseError(
+      'Failed to parse authentication response',
+      'json',
+      err instanceof Error ? err : new Error(String(err))
+    )
+  }
+}
+
+// Helper function to safely parse response bodies
+async function parseResponseBody(response: Response): Promise<unknown> {
+  try {
+    const text = await response.text()
+    return text ? JSON.parse(text) : undefined
+  } catch {
+    return undefined
   }
 }
 
@@ -103,32 +108,23 @@ export function createAuthMiddleware(config: AmigoSdkConfig): Middleware {
           request.headers.set('Authorization', `Bearer ${validToken.id_token}`)
         }
       } catch (error) {
-        if (error instanceof AuthenticationError) {
-          throw error
-        }
-        throw new AuthenticationError('Failed to obtain bearer token', {
-          errorCode: 'invalid_token',
-          cause: error,
-        })
+        // Clear token and re-throw - getBearerToken already provides proper error types
+        token = null
+        throw error
       }
       return request
     },
+
     onResponse: async ({ response }) => {
-      // Handle 401 responses by clearing token to force refresh
+      // Handle 401 responses by clearing token to force refresh on next request
       if (response.status === 401) {
         token = null
       }
     },
+
     onError: async ({ error }) => {
+      // Clear token on any error to force refresh
       token = null
-      // Wrap network errors in authentication context
-      if (error instanceof NetworkError) {
-        throw new AuthenticationError('Network error while authenticating with Amigo API', {
-          errorCode: 'missing_credentials',
-          cause: error,
-        })
-      }
-      // Pass through other error types
       throw error
     },
   }
