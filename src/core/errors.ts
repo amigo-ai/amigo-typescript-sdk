@@ -1,4 +1,4 @@
-import { Middleware } from 'openapi-fetch'
+import type { Middleware } from 'openapi-fetch'
 import { isNetworkError, parseResponseBody } from './utils'
 
 /**
@@ -21,7 +21,7 @@ export class AmigoError extends Error {
    */
   context?: Record<string, unknown>
 
-  constructor(message: string, options?: Record<string, any>) {
+  constructor(message: string, options?: Record<string, unknown>) {
     super(message)
     this.name = this.constructor.name
 
@@ -134,12 +134,15 @@ export function createApiError(response: Response, body?: unknown): AmigoError {
   const ErrorClass = map[response.status] ?? AmigoError
   const message =
     body && typeof body === 'object' && 'message' in body
-      ? String((body as any).message)
+      ? String((body as Record<string, unknown>).message)
       : response.statusText
 
   const options = {
     status: response.status,
-    code: body && typeof body === 'object' && 'code' in body ? (body as any).code : undefined,
+    code:
+      body && typeof body === 'object' && 'code' in body
+        ? (body as Record<string, unknown>).code
+        : undefined,
     response: body,
   }
 

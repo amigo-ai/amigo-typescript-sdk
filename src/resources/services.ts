@@ -1,4 +1,4 @@
-import { AmigoFetch } from '../core/openapi-client'
+import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
 
 export class ServiceResource {

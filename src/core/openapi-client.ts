@@ -1,9 +1,8 @@
-import createClient, { Middleware, type Client } from 'openapi-fetch'
+import createClient, { type Client } from 'openapi-fetch'
 import { createErrorMiddleware } from './errors'
 import { createAuthMiddleware } from './auth'
 import type { paths } from '../generated/api-types'
 import type { AmigoSdkConfig } from '..'
-import { isNetworkError, parseResponseBody } from './utils'
 
 export type AmigoFetch = Client<paths>
 

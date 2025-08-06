@@ -1,4 +1,4 @@
-import { ParseError } from './errors'
+// Note: ParseError import removed as it's unused in current implementation
 
 // Type helper to extract the data type from openapi-fetch responses
 export type ExtractDataType<T> = T extends { data?: infer D } ? D : never

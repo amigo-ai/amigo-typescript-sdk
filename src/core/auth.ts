@@ -1,6 +1,6 @@
-import { Middleware } from 'openapi-fetch'
-import { components } from '../generated/api-types'
-import { AmigoSdkConfig } from '..'
+import type { Middleware } from 'openapi-fetch'
+import type { components } from '../generated/api-types'
+import type { AmigoSdkConfig } from '..'
 import { AmigoError, AuthenticationError, NetworkError, ParseError, createApiError } from './errors'
 import { isNetworkError, parseResponseBody } from './utils'
 
