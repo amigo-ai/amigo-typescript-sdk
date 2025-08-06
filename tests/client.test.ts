@@ -2,17 +2,8 @@ import { describe, test, expect, beforeAll, afterAll, afterEach, vi } from 'vite
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { createAmigoFetch } from '../src/core/openapi-client'
-import { AmigoSdkConfig } from '../src/index'
 import { NetworkError, AmigoError, NotFoundError } from '../src/core/errors'
-
-// Mock config for testing
-const mockConfig: AmigoSdkConfig = {
-  apiKey: 'test-api-key',
-  apiKeyId: 'test-api-key-id',
-  userId: 'test-user-id',
-  orgId: 'test-org-id',
-  baseUrl: 'https://api.example.com',
-}
+import { mockConfig, withMockAuth } from './test-helpers'
 
 // MSW server setup
 const server = setupServer()
@@ -33,21 +24,16 @@ afterAll(() => {
 describe('HTTP Client Test', () => {
   describe('Error middleware', () => {
     test('Error middleware should throw API error on non-200 response', async () => {
-      // Mock auth endpoint to return success for token exchange
+      // Mock auth and API endpoints using helper
       server.use(
-        http.post('https://api.example.com/v1/test-org-id/user/signin_with_api_key', () => {
-          return HttpResponse.json({
-            id_token: 'mock-token',
-            expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        ...withMockAuth(
+          http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+            return HttpResponse.json(null, {
+              status: 404,
+              statusText: 'The specified organization does not exist.',
+            })
           })
-        }),
-        // Mock API endpoint to return 404 error
-        http.get('https://api.example.com/v1/test-org-id/organization/', () => {
-          return HttpResponse.json(null, {
-            status: 404,
-            statusText: 'The specified organization does not exist.',
-          })
-        })
+        )
       )
 
       const client = createAmigoFetch(mockConfig)
