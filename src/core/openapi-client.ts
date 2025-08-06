@@ -7,9 +7,13 @@ import { isNetworkError, parseResponseBody } from './utils'
 
 export type AmigoFetch = Client<paths>
 
-export function createAmigoFetch(config: AmigoSdkConfig): AmigoFetch {
+export function createAmigoFetch(
+  config: AmigoSdkConfig,
+  mockFetch?: (input: Request) => Promise<Response>
+): AmigoFetch {
   const client = createClient<paths>({
     baseUrl: config.baseUrl,
+    ...(mockFetch && { fetch: mockFetch }),
   })
 
   // Apply error handling middleware first (to catch all errors)
