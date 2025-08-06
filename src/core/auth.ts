@@ -2,6 +2,7 @@ import { Middleware } from 'openapi-fetch'
 import { components } from '../generated/api-types'
 import { AmigoSdkConfig } from '..'
 import { AmigoError, AuthenticationError, NetworkError, ParseError, createApiError } from './errors'
+import { isNetworkError, parseResponseBody } from './utils'
 
 type SignInWithApiKeyResponse =
   components['schemas']['src__app__endpoints__user__sign_in_with_api_key__Response']
@@ -14,7 +15,6 @@ export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWith
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'x-api-key': config.apiKey,
         'x-api-key-id': config.apiKeyId,
         'x-user-id': config.userId,
@@ -43,8 +43,8 @@ export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWith
     }
 
     // Handle network errors
-    if (err instanceof TypeError && err.message.includes('fetch')) {
-      throw new NetworkError('Failed to connect to authentication endpoint', err, {
+    if (isNetworkError(err)) {
+      throw new NetworkError('Failed to connect to authentication endpoint', err as Error, {
         url,
         method: 'POST',
       })
@@ -56,16 +56,6 @@ export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWith
       'json',
       err instanceof Error ? err : new Error(String(err))
     )
-  }
-}
-
-// Helper function to safely parse response bodies
-async function parseResponseBody(response: Response): Promise<unknown> {
-  try {
-    const text = await response.text()
-    return text ? JSON.parse(text) : undefined
-  } catch {
-    return undefined
   }
 }
 

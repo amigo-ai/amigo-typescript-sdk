@@ -8,12 +8,12 @@
     "emitDeclarationOnly": true,
     "outDir": "dist/types",
     "lib": ["ES2022", "DOM"],
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "skipLibCheck": true,
     "jsx": "preserve",
-    "rootDir": "src",
+    "rootDir": ".",
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "gen-types": "node scripts/gen-types.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc",
     "dev": "node scripts/gen.mjs && node scripts/build.mjs --watch",
     "format": "prettier --check .",
@@ -39,9 +40,11 @@
     "esbuild": "^0.25.8",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
+    "msw": "^2.10.4",
     "openapi-typescript": "^7.8.0",
     "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "openapi-fetch": "^0.14.0"

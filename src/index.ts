@@ -1,3 +1,4 @@
+import { ConfigurationError } from './core/errors'
 import { createAmigoFetch } from './core/openapi-client'
 import { OrganizationResource } from './resources/organization'
 import { ServiceResource } from './resources/services'
@@ -15,15 +16,39 @@ export interface AmigoSdkConfig {
   baseUrl?: string
 }
 
+const defaultBaseUrl = 'https://api.amigo.ai'
+
 export class AmigoClient {
   readonly organizations: OrganizationResource
   readonly services: ServiceResource
+  readonly config: AmigoSdkConfig
 
   constructor(config: AmigoSdkConfig) {
-    const api = createAmigoFetch(config)
+    this.config = validateConfig(config)
+
+    const api = createAmigoFetch(this.config)
     this.organizations = new OrganizationResource(api)
     this.services = new ServiceResource(api)
   }
+}
+
+function validateConfig(config: AmigoSdkConfig) {
+  if (!config.apiKey) {
+    throw new ConfigurationError('API key is required', 'apiKey')
+  }
+  if (!config.apiKeyId) {
+    throw new ConfigurationError('API key ID is required', 'apiKeyId')
+  }
+  if (!config.userId) {
+    throw new ConfigurationError('User ID is required', 'userId')
+  }
+  if (!config.orgId) {
+    throw new ConfigurationError('Organization ID is required', 'orgId')
+  }
+  if (!config.baseUrl) {
+    config.baseUrl = defaultBaseUrl
+  }
+  return config
 }
 
 // Export all errors as a namespace to avoid polluting the main import space

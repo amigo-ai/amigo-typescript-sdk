@@ -1,4 +1,5 @@
-import { AmigoFetch, extractData } from '../core/openapi-client'
+import { AmigoFetch } from '../core/openapi-client'
+import { extractData } from '../core/utils'
 
 export class ServiceResource {
   constructor(private c: AmigoFetch) {}
