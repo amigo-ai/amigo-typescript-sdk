@@ -1,3 +1,6 @@
+import { Middleware } from 'openapi-fetch'
+import { isNetworkError, parseResponseBody } from './utils'
+
 /**
  * Base error class for all Amigo SDK errors.
  * Provides common functionality and error identification.
@@ -143,4 +146,29 @@ export function createApiError(response: Response, body?: unknown): AmigoError {
   const error = new ErrorClass(message, options)
 
   return error
+}
+
+export function createErrorMiddleware(): Middleware {
+  return {
+    onResponse: async ({ response }) => {
+      if (!response.ok) {
+        const body = await parseResponseBody(response)
+        throw createApiError(response, body)
+      }
+    },
+    onError: async ({ error, request }) => {
+      // Handle network-related errors consistently
+      if (isNetworkError(error)) {
+        throw new NetworkError(
+          `Network error: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            url: request?.url,
+            method: request?.method,
+          }
+        )
+      }
+      throw error
+    },
+  }
 }
