@@ -1,0 +1,162 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (skip publish, commits, tags)'
+        required: false
+        default: false
+        type: boolean
+      production:
+        description: 'Publish to npm (instead of skipping)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+jobs:
+  # Reuse the existing test workflow
+  test:
+    uses: ./.github/workflows/test.yml
+    with:
+      skip_codecov: true
+    secrets: inherit
+
+  release:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Generate models
+        run: |
+          echo "🔄 Generating models from API spec..."
+          node scripts/gen.mjs
+          echo "✅ Models generated successfully"
+
+      - name: Increment version (alpha prerelease)
+        id: new_version
+        run: |
+          echo "🔄 Incrementing pre-release (alpha)..."
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            NEW_VERSION=$(npm version prerelease --preid alpha --no-git-tag-version --dry-run)
+            NEW_VERSION=${NEW_VERSION#v}
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "✅ (dry-run) Version would be: ${{ steps.current_version.outputs.version }} → $NEW_VERSION"
+          else
+            npm version prerelease --preid alpha --no-git-tag-version
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "✅ Version updated: ${{ steps.current_version.outputs.version }} → $NEW_VERSION"
+          fi
+
+      - name: Build package
+        run: |
+          echo "🔄 Building package..."
+          rm -rf dist/
+          npm run build
+          echo "✅ Package built successfully"
+          ls -la dist/
+
+      - name: Pack tarball
+        run: |
+          echo "🔄 Creating npm pack tarball..."
+          npm pack --silent
+          echo "✅ Tarball created"
+          ls -la *.tgz
+
+      - name: Publish to npm under alpha tag
+        if: ${{ !inputs.dry_run && inputs.production }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "🔄 Publishing to npm with tag 'alpha'..."
+          npm publish --tag alpha --provenance --access public
+          echo "✅ Package published to npm (alpha)"
+
+      - name: Commit version bump
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git add package.json package-lock.json src/generated || true
+          git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
+          git push origin HEAD
+
+      - name: Create and push tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git tag -a "v${{ steps.new_version.outputs.version }}" -m "Release v${{ steps.new_version.outputs.version }}"
+          git push origin "v${{ steps.new_version.outputs.version }}"
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'v${{ steps.new_version.outputs.version }}'
+          name: 'Release v${{ steps.new_version.outputs.version }}'
+          body: |
+            ## Changes in v${{ steps.new_version.outputs.version }}
+
+            This release was automatically created by the GitHub Actions release workflow.
+
+            ### Package Information
+            - Version: ${{ steps.new_version.outputs.version }}
+            - Channel: alpha (npm dist-tag)
+
+            ### Installation
+            npm install @amigo-ai/sdk@alpha
+          draft: false
+          prerelease: true
+          files: |
+            *.tgz
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ steps.new_version.outputs.version }}
+          path: |
+            dist/
+            *.tgz
+          retention-days: 30
+
+      - name: Release Summary
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ steps.new_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Previous: ${{ steps.current_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Channel: alpha (npm dist-tag)" >> $GITHUB_STEP_SUMMARY
+          echo "- Dry Run: ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Published: ${{ inputs.production && 'npm (alpha tag)' || 'skipped' }}" >> $GITHUB_STEP_SUMMARY

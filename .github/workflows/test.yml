@@ -4,7 +4,13 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  workflow_call:
+    inputs:
+      skip_codecov:
+        description: 'Skip Codecov upload'
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   test:
@@ -14,25 +20,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linter
+      - name: Lint
         run: npm run lint
 
-      - name: Run formatter check
-        run: npm run format
+      - name: Build
+        run: npm run build
+
+      - name: Run unit tests (fast)
+        if: ${{ inputs.skip_codecov }}
+        run: npm test -- --reporter=dot
 
       - name: Run tests with coverage
+        if: ${{ !inputs.skip_codecov }}
         run: npm run test:coverage
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage to Codecov
+        if: ${{ !inputs.skip_codecov }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

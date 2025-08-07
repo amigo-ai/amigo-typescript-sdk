@@ -34,8 +34,6 @@ describe.skipIf(!RUN_INTEGRATION)('Integration Tests - Real API', () => {
 
     const orgData = await client.organizations.getOrganization(testConfig.orgId)
 
-    console.log(orgData)
-
     expect(orgData).toBeDefined()
     expect(typeof orgData).toBe('object')
   })

@@ -1,7 +1,10 @@
 {
-  "name": "@amigo/amigo-typescript-sdk",
-  "version": "1.0.0",
+  "name": "@amigo-ai/sdk",
+  "version": "1.0.0-alpha.0",
   "description": "Amigo TypeScript SDK",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "files": [
     "dist"
