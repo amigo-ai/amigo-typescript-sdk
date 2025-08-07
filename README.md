@@ -14,12 +14,6 @@ Install the SDK using npm:
 npm install @amigo/amigo-typescript-sdk
 ```
 
-Or using yarn:
-
-```bash
-yarn add @amigo/amigo-typescript-sdk
-```
-
 ## Quick Start
 
 ```typescript
@@ -65,13 +59,6 @@ The SDK requires the following configuration parameters:
 3. **User ID**: The ID of the user you want to impersonate for API calls
 
 For detailed instructions on generating API keys, see the [Authentication Guide](https://docs.amigo.ai/developer-guide).
-
-## Available Resources
-
-The SDK provides access to the following resources:
-
-- **Organizations**: Manage organization settings and information
-- **Services**: Interact with Amigo services and AI capabilities
 
 ## Error Handling
 

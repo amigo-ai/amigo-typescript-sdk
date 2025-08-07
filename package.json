@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc",
+    "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc --project tsconfig.build.json",
     "dev": "node scripts/gen.mjs && node scripts/build.mjs --watch",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
