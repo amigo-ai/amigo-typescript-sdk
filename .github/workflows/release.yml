@@ -91,11 +91,13 @@ jobs:
           ls -la dist/
 
       - name: Pack tarball
+        id: pack
         run: |
           echo "🔄 Creating npm pack tarball..."
-          npm pack --silent
-          echo "✅ Tarball created"
-          ls -la *.tgz
+          FILE=$(npm pack --silent)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+          echo "✅ Tarball created: $FILE"
+          ls -la "$FILE"
 
       - name: Publish to npm under alpha tag
         if: ${{ !inputs.dry_run && inputs.production }}
@@ -103,7 +105,13 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "🔄 Publishing to npm with tag 'alpha'..."
-          npm publish --tag alpha --provenance --access public
+          FILE="${{ steps.pack.outputs.file }}"
+          ACCESS_FLAG="--access public"
+          PROV_FLAG=""
+          if [ "${{ github.repository_visibility }}" = "public" ]; then
+            PROV_FLAG="--provenance"
+          fi
+          npm publish "$FILE" --tag alpha $PROV_FLAG $ACCESS_FLAG
           echo "✅ Package published to npm (alpha)"
 
       - name: Commit version bump
@@ -139,7 +147,7 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            *.tgz
+            ${{ steps.pack.outputs.file }}
 
       - name: Upload build artifacts
         if: always()
@@ -148,7 +156,7 @@ jobs:
           name: dist-${{ steps.new_version.outputs.version }}
           path: |
             dist/
-            *.tgz
+            ${{ steps.pack.outputs.file }}
           retention-days: 30
 
       - name: Release Summary
