@@ -9,6 +9,7 @@
   "scripts": {
     "gen-types": "node scripts/gen-types.mjs",
     "test": "vitest run",
+    "test:integration": "RUN_INTEGRATION=true vitest run tests/integration.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc --project tsconfig.build.json",
