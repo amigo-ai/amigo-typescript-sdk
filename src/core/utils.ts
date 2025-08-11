@@ -1,14 +1,23 @@
-// Note: ParseError import removed as it's unused in current implementation
+import { ParseError } from './errors'
 
 // Type helper to extract the data type from openapi-fetch responses
-export type ExtractDataType<T> = T extends { data?: infer D } ? D : never
+export type ExtractDataType<T> = T extends { data?: infer D } ? NonNullable<D> : never
 
 // Helper function to extract data from openapi-fetch responses
 // Since our middleware throws on errors, successful responses will have data
-export async function extractData<T>(responsePromise: Promise<T>): Promise<ExtractDataType<T>> {
+export async function extractData<T extends { data?: unknown }>(
+  responsePromise: Promise<T>
+): Promise<ExtractDataType<T>> {
   const result = await responsePromise
-  // openapi-fetch guarantees data exists on successful responses
-  return (result as { data: ExtractDataType<T> }).data
+  const data = (result as { data?: ExtractDataType<T> }).data
+
+  if (data === undefined || data === null) {
+    // Invariant: our error middleware throws for non-2xx responses.
+    // If we reach here without data, treat as a parse/protocol error.
+    throw new ParseError('Expected response data to be present for successful request', 'response')
+  }
+
+  return data
 }
 
 // Utility function to safely parse response bodies without throwing errors

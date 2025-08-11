@@ -34,7 +34,6 @@ describe.skipIf(!RUN_INTEGRATION)('Integration Tests - Real API', () => {
 
     const orgData = await client.organizations.getOrganization(testConfig.orgId)
 
-    expect(orgData).toBeDefined()
     expect(typeof orgData).toBe('object')
   })
 
@@ -43,7 +42,6 @@ describe.skipIf(!RUN_INTEGRATION)('Integration Tests - Real API', () => {
 
     const servicesData = await client.services.getServices(testConfig.orgId)
 
-    expect(servicesData).toBeDefined()
     expect(typeof servicesData).toBe('object')
   })
 
