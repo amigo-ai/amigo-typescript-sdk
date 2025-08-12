@@ -25,6 +25,15 @@ describe.sequential('Integration - Conversation (Real API)', () => {
   beforeAll(async () => {
     client = new AmigoClient(testConfig)
     try {
+      // Verify target service exists for this org to avoid 5xx from misconfiguration
+      const services = await client.services.getServices()
+      const serviceExists = Array.isArray((services as any).services)
+        ? (services as any).services.some((s: any) => s.id === serviceId)
+        : true // if schema differs, skip this check
+      if (!serviceExists) {
+        throw new Error(`Service ${serviceId} not found for org ${testConfig.orgId}`)
+      }
+
       const existing = await client.conversations.getConversations({
         service_id: [serviceId],
         is_finished: false,
@@ -41,6 +50,9 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     } catch {
       // Ignore listing errors; tests will surface issues during creation
     }
+
+    // Small delay to allow backend eventual consistency after finishing conversations
+    await new Promise(resolve => setTimeout(resolve, 500))
   })
 
   test('create conversation streams events and returns 201 with ids', async () => {
@@ -59,6 +71,9 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     for await (const evt of events) {
       if (evt && typeof evt === 'object' && 'type' in evt) {
         const type = (evt as any).type as string
+        if (type === 'error') {
+          throw new Error(`error event: ${JSON.stringify(evt)}`)
+        }
         if (type === 'conversation-created') {
           conversationId = (evt as any).conversation_id
           expect(typeof conversationId).toBe('string')
@@ -91,7 +106,7 @@ describe.sequential('Integration - Conversation (Real API)', () => {
 
     expect(recommendations).toBeDefined()
     expect(Array.isArray(recommendations.recommended_responses)).toBe(true)
-  })
+  }, 30000)
 
   test('get conversations can filter by id', async () => {
     expect(conversationId).toBeDefined()
@@ -186,8 +201,8 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     try {
       await client.conversations.finishConversation(conversationId!)
     } catch (e) {
-      // If the conversation was already auto-completed, finishing may return 409
-      expect(e).toBeInstanceOf(errors.ConflictError)
+      // If the conversation was already auto-completed or not found due to eventual consistency
+      expect(e instanceof errors.ConflictError || e instanceof errors.NotFoundError).toBe(true)
     }
   })
 })

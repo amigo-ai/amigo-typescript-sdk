@@ -20,7 +20,8 @@ export class ConversationResource {
   async createConversation(
     body: components['schemas']['src__app__endpoints__conversation__create_conversation__Request'],
     queryParams: operations['create-conversation']['parameters']['query'],
-    headers?: operations['create-conversation']['parameters']['header']
+    headers?: operations['create-conversation']['parameters']['header'],
+    options?: { signal?: AbortSignal }
   ) {
     const resp = await this.c.POST('/v1/{organization}/conversation/', {
       params: { path: { organization: this.orgId }, query: queryParams },
@@ -28,6 +29,7 @@ export class ConversationResource {
       headers,
       // Ensure we receive a stream for NDJSON
       parseAs: 'stream',
+      ...(options?.signal && { signal: options.signal }),
     })
 
     // onResponse middleware throws for non-2xx; if we reach here, it's OK.
@@ -40,7 +42,8 @@ export class ConversationResource {
     conversationId: string,
     body: InteractWithConversationBody,
     queryParams: operations['interact-with-conversation']['parameters']['query'],
-    headers?: operations['interact-with-conversation']['parameters']['header']
+    headers?: operations['interact-with-conversation']['parameters']['header'],
+    options?: { signal?: AbortSignal }
   ) {
     const resp = await this.c.POST('/v1/{organization}/conversation/{conversation_id}/interact', {
       params: {
@@ -50,6 +53,7 @@ export class ConversationResource {
       body,
       headers,
       parseAs: 'stream',
+      ...(options?.signal && { signal: options.signal }),
     })
 
     return parseNdjsonStream<
@@ -87,13 +91,15 @@ export class ConversationResource {
 
   async finishConversation(
     conversationId: string,
-    headers?: operations['finish-conversation']['parameters']['header']
+    headers?: operations['finish-conversation']['parameters']['header'],
+    options?: { signal?: AbortSignal }
   ) {
     await this.c.POST('/v1/{organization}/conversation/{conversation_id}/finish/', {
       params: { path: { organization: this.orgId, conversation_id: conversationId } },
       headers,
       // No content is expected; parse as text to access raw Response
       parseAs: 'text',
+      ...(options?.signal && { signal: options.signal }),
     })
     return
   }
