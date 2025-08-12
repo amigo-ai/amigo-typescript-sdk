@@ -1,5 +1,5 @@
 import { AmigoFetch } from '../core/openapi-client'
-import { extractData } from '../core/utils'
+import { extractData, parseNdjsonStream } from '../core/utils'
 import { components, operations } from '../generated/api-types'
 
 // Request body for Interact with Conversation
@@ -22,13 +22,18 @@ export class ConversationResource {
     queryParams: operations['create-conversation']['parameters']['query'],
     headers?: operations['create-conversation']['parameters']['header']
   ) {
-    return extractData(
-      this.c.POST('/v1/{organization}/conversation/', {
-        params: { path: { organization: this.orgId }, query: queryParams },
-        body,
-        headers,
-      })
-    )
+    const resp = await this.c.POST('/v1/{organization}/conversation/', {
+      params: { path: { organization: this.orgId }, query: queryParams },
+      body,
+      headers,
+      // Ensure we receive a stream for NDJSON
+      parseAs: 'stream',
+    })
+
+    // onResponse middleware throws for non-2xx; if we reach here, it's OK.
+    return parseNdjsonStream<
+      components['schemas']['src__app__endpoints__conversation__create_conversation__Response']
+    >(resp.response)
   }
 
   async interactWithConversation(
@@ -37,16 +42,19 @@ export class ConversationResource {
     queryParams: operations['interact-with-conversation']['parameters']['query'],
     headers?: operations['interact-with-conversation']['parameters']['header']
   ) {
-    return extractData(
-      this.c.POST('/v1/{organization}/conversation/{conversation_id}/interact', {
-        params: {
-          path: { organization: this.orgId, conversation_id: conversationId },
-          query: queryParams,
-        },
-        body,
-        headers,
-      })
-    )
+    const resp = await this.c.POST('/v1/{organization}/conversation/{conversation_id}/interact', {
+      params: {
+        path: { organization: this.orgId, conversation_id: conversationId },
+        query: queryParams,
+      },
+      body,
+      headers,
+      parseAs: 'stream',
+    })
+
+    return parseNdjsonStream<
+      components['schemas']['src__app__endpoints__conversation__interact_with_conversation__Response']
+    >(resp.response)
   }
 
   async getConversations(
@@ -81,12 +89,13 @@ export class ConversationResource {
     conversationId: string,
     headers?: operations['finish-conversation']['parameters']['header']
   ) {
-    return extractData(
-      this.c.POST('/v1/{organization}/conversation/{conversation_id}/finish/', {
-        params: { path: { organization: this.orgId, conversation_id: conversationId } },
-        headers,
-      })
-    )
+    await this.c.POST('/v1/{organization}/conversation/{conversation_id}/finish/', {
+      params: { path: { organization: this.orgId, conversation_id: conversationId } },
+      headers,
+      // No content is expected; parse as text to access raw Response
+      parseAs: 'text',
+    })
+    return
   }
 
   async recommendResponsesForInteraction(

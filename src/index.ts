@@ -1,6 +1,7 @@
 import { ConfigurationError } from './core/errors'
 import { createAmigoFetch } from './core/openapi-client'
 import { OrganizationResource } from './resources/organization'
+import { ConversationResource } from './resources/conversation'
 import { ServiceResource } from './resources/services'
 
 export interface AmigoSdkConfig {
@@ -20,6 +21,7 @@ const defaultBaseUrl = 'https://api.amigo.ai'
 
 export class AmigoClient {
   readonly organizations: OrganizationResource
+  readonly conversations: ConversationResource
   readonly services: ServiceResource
   readonly config: AmigoSdkConfig
 
@@ -28,6 +30,7 @@ export class AmigoClient {
 
     const api = createAmigoFetch(this.config)
     this.organizations = new OrganizationResource(api, this.config.orgId)
+    this.conversations = new ConversationResource(api, this.config.orgId)
     this.services = new ServiceResource(api, this.config.orgId)
   }
 }

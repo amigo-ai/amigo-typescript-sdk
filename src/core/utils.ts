@@ -20,6 +20,52 @@ export async function extractData<T extends { data?: unknown }>(
   return data
 }
 
+/**
+ * Parse an NDJSON HTTP response body into an async generator of parsed JSON objects.
+ * The generator yields one parsed object per line. Empty lines are skipped.
+ */
+export async function* parseNdjsonStream<T = unknown>(response: Response): AsyncGenerator<T> {
+  const body = response.body
+  if (!body) return
+
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let bufferedText = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      bufferedText += decoder.decode(value, { stream: true })
+
+      let newlineIndex: number
+      // Process all complete lines in the buffer
+      while ((newlineIndex = bufferedText.indexOf('\n')) !== -1) {
+        const line = bufferedText.slice(0, newlineIndex).trim()
+        bufferedText = bufferedText.slice(newlineIndex + 1)
+        if (!line) continue
+        try {
+          yield JSON.parse(line) as T
+        } catch (err) {
+          throw new ParseError('Failed to parse NDJSON line', 'json', err as Error)
+        }
+      }
+    }
+
+    // Flush any trailing line without a newline
+    const trailing = bufferedText.trim()
+    if (trailing) {
+      try {
+        yield JSON.parse(trailing) as T
+      } catch (err) {
+        throw new ParseError('Failed to parse trailing NDJSON line', 'json', err as Error)
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 // Utility function to safely parse response bodies without throwing errors
 export async function parseResponseBody(response: Response): Promise<unknown> {
   try {
