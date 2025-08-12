@@ -14,7 +14,7 @@
     "test": "vitest run --project unit",
     "test:integration": "RUN_INTEGRATION=true vitest run tests/integration.test.ts",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --project unit",
     "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc --project tsconfig.build.json",
     "dev": "node scripts/gen.mjs && node scripts/build.mjs --watch",
     "format": "prettier --check .",
