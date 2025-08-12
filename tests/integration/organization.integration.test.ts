@@ -1,8 +1,7 @@
 import { describe, test, expect } from 'vitest'
 import { config } from 'dotenv'
-import { AmigoClient } from '../src/index'
-import { errors } from '../src/index'
-import { createAgentVersionRequestBody } from './test-helpers'
+import { AmigoClient, errors } from '../../src/index'
+import { createAgentVersionRequestBody } from '../test-helpers'
 
 // Load environment variables from .env file
 config()
@@ -10,13 +9,7 @@ config()
 /**
  * Integration tests for AmigoClient against real API endpoints.
  * These tests are skipped by default and should only be run manually during demos.
- *
- * To run these tests, set the environment variable RUN_INTEGRATION=true:
- * RUN_INTEGRATION=true npm test -- integration.test.ts
  */
-
-// Only run integration tests when explicitly enabled
-const RUN_INTEGRATION = process.env.RUN_INTEGRATION?.toLowerCase() === 'true'
 
 // Real API configuration - these should be valid credentials for testing
 const testConfig = {
@@ -27,7 +20,7 @@ const testConfig = {
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
 }
 
-describe.skipIf(!RUN_INTEGRATION)('Integration Tests - Real API', () => {
+describe('Integration Tests - Real API', () => {
   let client: AmigoClient
 
   test('should get organization data successfully', async () => {

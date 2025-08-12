@@ -12,7 +12,7 @@
   "scripts": {
     "gen-types": "node scripts/gen.mjs",
     "test": "vitest run --project unit",
-    "test:integration": "RUN_INTEGRATION=true vitest run tests/integration.test.ts",
+    "test:integration": "vitest run --project integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --project unit",
     "build": "node scripts/gen.mjs && node scripts/build.mjs && tsc --project tsconfig.build.json",

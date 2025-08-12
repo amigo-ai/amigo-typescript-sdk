@@ -17,6 +17,20 @@ export class ConversationResource {
     private orgId: string
   ) {}
 
+  async createConversation(
+    body: components['schemas']['src__app__endpoints__conversation__create_conversation__Request'],
+    queryParams: operations['create-conversation']['parameters']['query'],
+    headers?: operations['create-conversation']['parameters']['header']
+  ) {
+    return extractData(
+      this.c.POST('/v1/{organization}/conversation/', {
+        params: { path: { organization: this.orgId }, query: queryParams },
+        body,
+        headers,
+      })
+    )
+  }
+
   async interactWithConversation(
     conversationId: string,
     body: InteractWithConversationBody,
@@ -42,20 +56,6 @@ export class ConversationResource {
     return extractData(
       this.c.GET('/v1/{organization}/conversation/', {
         params: { path: { organization: this.orgId }, query: queryParams },
-        headers,
-      })
-    )
-  }
-
-  async createConversation(
-    body: components['schemas']['src__app__endpoints__conversation__create_conversation__Request'],
-    queryParams: operations['create-conversation']['parameters']['query'],
-    headers?: operations['create-conversation']['parameters']['header']
-  ) {
-    return extractData(
-      this.c.POST('/v1/{organization}/conversation/', {
-        params: { path: { organization: this.orgId }, query: queryParams },
-        body,
         headers,
       })
     )

@@ -14,14 +14,14 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['tests/**/*.{test,spec}.{js,ts}', 'src/**/*.{test,spec}.{js,ts}'],
-          exclude: ['node_modules', 'dist', 'tests/integration.test.ts'],
+          exclude: ['node_modules', 'dist', 'tests/integration/**'],
         },
       },
       // Integration tests
       {
         test: {
           name: 'integration',
-          include: ['tests/integration.test.ts'],
+          include: ['tests/integration/**'],
           env: { RUN_INTEGRATION: 'true' },
           pool: 'forks',
         },
