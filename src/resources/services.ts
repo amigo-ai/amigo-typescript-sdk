@@ -1,5 +1,6 @@
 import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
+import { operations } from '../generated/api-types'
 
 export class ServiceResource {
   constructor(
@@ -9,12 +10,14 @@ export class ServiceResource {
 
   /**
    * Get services
+   * @param headers - The headers
    * @returns The services
    */
-  async getServices() {
+  async getServices(headers?: operations['get-services']['parameters']['header']) {
     return extractData(
       this.c.GET('/v1/{organization}/service/', {
         params: { path: { organization: this.orgId } },
+        headers,
       })
     )
   }
