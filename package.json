@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "gen-types": "node scripts/gen-types.mjs",
+    "gen-types": "node scripts/gen.mjs",
     "test": "vitest run --project unit",
     "test:integration": "RUN_INTEGRATION=true vitest run tests/integration.test.ts",
     "test:watch": "vitest",

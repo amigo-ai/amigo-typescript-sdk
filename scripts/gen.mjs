@@ -8,6 +8,14 @@ const outTypesFile = 'src/generated/api-types.ts'
 /* -------- TypeScript types -------- */
 await mkdir(dirname(outTypesFile), { recursive: true })
 const ast = await openapiTS(schemaUrl)
-await writeFile(outTypesFile, astToString(ast))
+
+// Convert AST to string and apply targeted overrides
+let code = astToString(ast)
+
+// Override ONLY the `interact-with-conversation` operation's requestBody to `any`
+const interactOpPattern = /("interact-with-conversation":\s*\{[\s\S]*?)(requestBody\?:\s*never;)/
+code = code.replace(interactOpPattern, '$1requestBody?: any;')
+
+await writeFile(outTypesFile, code)
 
 console.log('✅ OpenAPI types generated')
