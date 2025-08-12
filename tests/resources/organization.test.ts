@@ -5,7 +5,7 @@ import { OrganizationResource } from '../../src/resources/organization'
 import { createAmigoFetch } from '../../src/core/openapi-client'
 import { NotFoundError } from '../../src/core/errors'
 import type { components } from '../../src/generated/api-types'
-import { mockConfig, withMockAuth, mockFailedAuth, mockAgentVersionRequest } from '../test-helpers'
+import { mockConfig, withMockAuth, createAgentVersionRequestBody } from '../test-helpers'
 
 // Mock organization response
 const mockOrganizationResponse: components['schemas']['src__app__endpoints__organization__get_organization__Response'] =
@@ -138,7 +138,7 @@ describe('OrganizationResource', () => {
 
     const result = await organizationResource.createAgentVersion(
       'agent-123',
-      mockAgentVersionRequest
+      createAgentVersionRequestBody
     )
     expect(result).toEqual(mockCreateVersionResponse)
     expect(result.id).toBe('ver-1')
@@ -161,7 +161,7 @@ describe('OrganizationResource', () => {
     const organizationResource = new OrganizationResource(client, 'nonexistent-org')
 
     await expect(
-      organizationResource.createAgentVersion('missing-agent', mockAgentVersionRequest)
+      organizationResource.createAgentVersion('missing-agent', createAgentVersionRequestBody)
     ).rejects.toThrow(NotFoundError)
   })
 
@@ -228,7 +228,7 @@ describe('OrganizationResource', () => {
     const client = createAmigoFetch(mockConfig)
     const organizationResource = new OrganizationResource(client, 'test-org')
 
-    await expect(organizationResource.deleteAgent('agent-1')).resolves.toBeDefined()
+    await expect(organizationResource.deleteAgent('agent-1')).resolves.toBeUndefined()
   })
 
   test('deleteAgent throws NotFoundError on 404', async () => {

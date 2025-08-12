@@ -90,13 +90,17 @@ export class OrganizationResource {
    * @param headers - The headers
    * @returns The agent details
    */
-  async deleteAgent(agentId: string, headers?: operations['delete-agent']['parameters']['header']) {
-    return extractData(
-      this.c.DELETE('/v1/{organization}/organization/agent/{agent_id}/', {
-        params: { path: { organization: this.orgId, agent_id: agentId } },
-        headers,
-      })
-    )
+  async deleteAgent(
+    agentId: string,
+    headers?: operations['delete-agent']['parameters']['header']
+  ): Promise<void> {
+    // DELETE endpoints returns no content (e.g., 204 No Content).
+    // Our middleware already throws on non-2xx responses, so simply await the call.
+    await this.c.DELETE('/v1/{organization}/organization/agent/{agent_id}/', {
+      params: { path: { organization: this.orgId, agent_id: agentId } },
+      headers,
+    })
+    return
   }
 
   /**

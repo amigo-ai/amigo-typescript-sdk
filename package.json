@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "gen-types": "node scripts/gen-types.mjs",
-    "test": "vitest run",
+    "test": "vitest run --project unit",
     "test:integration": "RUN_INTEGRATION=true vitest run tests/integration.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
