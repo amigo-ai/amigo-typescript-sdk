@@ -1,6 +1,6 @@
 import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
-import { components, operations } from '../generated/api-types'
+import type { components, operations } from '../generated/api-types'
 
 export class OrganizationResource {
   constructor(
