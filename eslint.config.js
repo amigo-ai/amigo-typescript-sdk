@@ -37,6 +37,14 @@ export default [
     },
   },
 
+  // Allow explicit any in generated types
+  {
+    files: ['src/generated/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
   // Prettier config to turn off conflicting rules
   prettier,
 

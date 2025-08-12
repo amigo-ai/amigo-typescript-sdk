@@ -19,7 +19,8 @@
     "dev": "node scripts/gen.mjs && node scripts/build.mjs --watch",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings 0"
+    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings 0",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix"
   },
   "exports": {
     ".": {

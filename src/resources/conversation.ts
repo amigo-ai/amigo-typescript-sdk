@@ -1,6 +1,6 @@
-import { AmigoFetch } from '../core/openapi-client'
+import type { AmigoFetch } from '../core/openapi-client'
 import { extractData, parseNdjsonStream } from '../core/utils'
-import { components, operations } from '../generated/api-types'
+import type { components, operations } from '../generated/api-types'
 
 // Request body for Interact with Conversation
 export type InteractWithConversationBody =
