@@ -57,9 +57,8 @@ export class OrganizationResource {
   ) {
     return extractData(
       this.c.POST('/v1/{organization}/organization/agent/{agent_id}/', {
-        params: { path: { organization: this.orgId, agent_id: agentId } },
+        params: { path: { organization: this.orgId, agent_id: agentId }, query: queryParams },
         body,
-        query: queryParams,
         headers,
       })
     )
@@ -77,8 +76,7 @@ export class OrganizationResource {
   ) {
     return extractData(
       this.c.GET('/v1/{organization}/organization/agent', {
-        params: { path: { organization: this.orgId } },
-        query: queryParams,
+        params: { path: { organization: this.orgId }, query: queryParams },
         headers,
       })
     )
@@ -117,8 +115,7 @@ export class OrganizationResource {
   ) {
     return extractData(
       this.c.GET('/v1/{organization}/organization/agent/{agent_id}/version', {
-        params: { path: { organization: this.orgId, agent_id: agentId } },
-        query: queryParams,
+        params: { path: { organization: this.orgId, agent_id: agentId }, query: queryParams },
         headers,
       })
     )

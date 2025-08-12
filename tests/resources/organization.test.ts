@@ -296,4 +296,110 @@ describe('OrganizationResource', () => {
       NotFoundError
     )
   })
+
+  test('getAgents passes query parameters correctly', async () => {
+    const mockAgentsResponse: components['schemas']['src__app__endpoints__organization__get_agents__Response'] =
+      {
+        agents: [],
+        has_more: false,
+        continuation_token: null,
+      }
+
+    server.use(
+      ...withMockAuth(
+        http.get('https://api.example.com/v1/test-org/organization/agent', async ({ request }) => {
+          const url = new URL(request.url)
+          const params = url.searchParams
+
+          expect(params.getAll('id')).toEqual(['agent-1', 'agent-2'])
+          expect(params.get('deprecated')).toBe('true')
+          expect(params.get('limit')).toBe('10')
+          expect(params.get('continuation_token')).toBe('5')
+
+          return HttpResponse.json(mockAgentsResponse)
+        })
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    const organizationResource = new OrganizationResource(client, 'test-org')
+
+    await organizationResource.getAgents({
+      id: ['agent-1', 'agent-2'],
+      deprecated: true,
+      limit: 10,
+      continuation_token: 5,
+    })
+  })
+
+  test('createAgentVersion passes query parameter version correctly', async () => {
+    const mockCreateVersionResponse: components['schemas']['src__app__endpoints__organization__create_agent_version__Response'] =
+      {
+        id: 'ver-2',
+        version: 2,
+        created_at: new Date().toISOString(),
+      }
+
+    server.use(
+      ...withMockAuth(
+        http.post(
+          'https://api.example.com/v1/test-org/organization/agent/agent-123/',
+          async ({ request }) => {
+            const url = new URL(request.url)
+            const params = url.searchParams
+            expect(params.get('version')).toBe('2')
+            return HttpResponse.json(mockCreateVersionResponse)
+          }
+        )
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    const organizationResource = new OrganizationResource(client, 'test-org')
+
+    const result = await organizationResource.createAgentVersion(
+      'agent-123',
+      createAgentVersionRequestBody,
+      { version: 2 }
+    )
+    expect(result).toEqual(mockCreateVersionResponse)
+  })
+
+  test('getAgentVersions passes query parameters correctly', async () => {
+    const mockAgentVersions: components['schemas']['src__app__endpoints__organization__get_agent_versions__Response'] =
+      {
+        agent_versions: [],
+        has_more: false,
+        continuation_token: null,
+      }
+
+    server.use(
+      ...withMockAuth(
+        http.get(
+          'https://api.example.com/v1/test-org/organization/agent/agent-1/version',
+          async ({ request }) => {
+            const url = new URL(request.url)
+            const params = url.searchParams
+
+            expect(params.get('version')).toBe('1-3')
+            expect(params.get('limit')).toBe('2')
+            expect(params.get('continuation_token')).toBe('7')
+            expect(params.getAll('sort_by')).toEqual(['+version', '-version'])
+
+            return HttpResponse.json(mockAgentVersions)
+          }
+        )
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    const organizationResource = new OrganizationResource(client, 'test-org')
+
+    await organizationResource.getAgentVersions('agent-1', {
+      version: '1-3',
+      limit: 2,
+      continuation_token: 7,
+      sort_by: ['+version', '-version'],
+    })
+  })
 })
