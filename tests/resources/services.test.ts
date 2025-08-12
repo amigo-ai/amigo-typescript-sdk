@@ -55,8 +55,8 @@ describe('ServiceResource', () => {
     )
 
     const client = createAmigoFetch(mockConfig)
-    const serviceResource = new ServiceResource(client)
-    const result = await serviceResource.getServices('test-org')
+    const serviceResource = new ServiceResource(client, 'test-org')
+    const result = await serviceResource.getServices()
 
     expect(result).toBeDefined()
     expect(result).toEqual(mockServicesResponse)
@@ -77,8 +77,8 @@ describe('ServiceResource', () => {
     )
 
     const client = createAmigoFetch(mockConfig)
-    const serviceResource = new ServiceResource(client)
+    const serviceResource = new ServiceResource(client, 'nonexistent-org')
 
-    await expect(serviceResource.getServices('nonexistent-org')).rejects.toThrow(NotFoundError)
+    await expect(serviceResource.getServices()).rejects.toThrow(NotFoundError)
   })
 })

@@ -46,8 +46,8 @@ describe('OrganizationResource', () => {
     )
 
     const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client)
-    const result = await organizationResource.getOrganization('test-org')
+    const organizationResource = new OrganizationResource(client, 'test-org')
+    const result = await organizationResource.getOrganization()
 
     expect(result).toBeDefined()
     expect(result).toEqual(mockOrganizationResponse)
@@ -66,10 +66,8 @@ describe('OrganizationResource', () => {
     )
 
     const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client)
+    const organizationResource = new OrganizationResource(client, 'nonexistent-org')
 
-    await expect(organizationResource.getOrganization('nonexistent-org')).rejects.toThrow(
-      NotFoundError
-    )
+    await expect(organizationResource.getOrganization()).rejects.toThrow(NotFoundError)
   })
 })

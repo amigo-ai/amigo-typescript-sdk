@@ -32,7 +32,7 @@ describe.skipIf(!RUN_INTEGRATION)('Integration Tests - Real API', () => {
   test('should get organization data successfully', async () => {
     client = new AmigoClient(testConfig)
 
-    const orgData = await client.organizations.getOrganization(testConfig.orgId)
+    const orgData = await client.organizations.getOrganization()
 
     expect(typeof orgData).toBe('object')
   })
@@ -40,29 +40,28 @@ describe.skipIf(!RUN_INTEGRATION)('Integration Tests - Real API', () => {
   test('should get services data successfully', async () => {
     client = new AmigoClient(testConfig)
 
-    const servicesData = await client.services.getServices(testConfig.orgId)
+    const servicesData = await client.services.getServices()
 
     expect(typeof servicesData).toBe('object')
   })
 
   test('should throw NotFoundError for invalid organization ID', async () => {
-    client = new AmigoClient(testConfig)
+    const invalidConfig = {
+      ...testConfig,
+      orgId: 'invalid-org-id-123',
+    }
+    client = new AmigoClient(invalidConfig)
 
-    await expect(client.organizations.getOrganization('invalid-org-id-123')).rejects.toThrow(
-      errors.NotFoundError
-    )
+    await expect(client.organizations.getOrganization()).rejects.toThrow(errors.NotFoundError)
   })
 
   test('should throw AuthenticationError for invalid credentials', async () => {
     const invalidConfig = {
       ...testConfig,
       apiKey: 'invalid-api-key',
-      apiKeyId: 'invalid-api-key-id',
     }
     client = new AmigoClient(invalidConfig)
 
-    await expect(client.organizations.getOrganization(testConfig.orgId)).rejects.toThrow(
-      errors.AuthenticationError
-    )
+    await expect(client.organizations.getOrganization()).rejects.toThrow(errors.AuthenticationError)
   })
 })

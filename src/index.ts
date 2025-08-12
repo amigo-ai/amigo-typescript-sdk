@@ -27,8 +27,8 @@ export class AmigoClient {
     this.config = validateConfig(config)
 
     const api = createAmigoFetch(this.config)
-    this.organizations = new OrganizationResource(api)
-    this.services = new ServiceResource(api)
+    this.organizations = new OrganizationResource(api, this.config.orgId)
+    this.services = new ServiceResource(api, this.config.orgId)
   }
 }
 
