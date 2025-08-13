@@ -114,6 +114,25 @@ jobs:
           npm publish "$FILE" --tag alpha $PROV_FLAG $ACCESS_FLAG
           echo "✅ Package published to npm (alpha)"
 
+      - name: Point npm latest tag to current alpha
+        if: ${{ !inputs.dry_run && inputs.production }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ steps.new_version.outputs.version }}"
+          echo "🔄 Updating npm dist-tag: latest → $VERSION"
+          ATTEMPTS=0
+          until npm dist-tag add @amigo-ai/sdk@"$VERSION" latest; do
+            ATTEMPTS=$((ATTEMPTS+1))
+            if [ $ATTEMPTS -ge 5 ]; then
+              echo "⚠️  Failed to update npm dist-tag after $ATTEMPTS attempts; continuing without failing the release."
+              break
+            fi
+            echo "⏳ Tag update not yet available; retrying in 3s (attempt $ATTEMPTS/5)..."
+            sleep 3
+          done
+          echo "✅ npm dist-tag set (or already current): latest → $VERSION"
+
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
