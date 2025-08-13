@@ -13,10 +13,13 @@ export class ServiceResource {
    * @param headers - The headers
    * @returns The services
    */
-  async getServices(headers?: operations['get-services']['parameters']['header']) {
+  async getServices(
+    queryParams?: operations['get-services']['parameters']['query'],
+    headers?: operations['get-services']['parameters']['header']
+  ) {
     return extractData(
       this.c.GET('/v1/{organization}/service/', {
-        params: { path: { organization: this.orgId } },
+        params: { path: { organization: this.orgId }, query: queryParams },
         headers,
       })
     )

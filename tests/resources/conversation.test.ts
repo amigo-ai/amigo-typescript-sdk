@@ -441,24 +441,6 @@ describe('ConversationResource', () => {
       await expect(resource.finishConversation('conv-4')).resolves.toBeUndefined()
     })
 
-    test('supports AbortSignal cancellation', async () => {
-      server.use(
-        ...withMockAuth(
-          http.post('https://api.example.com/v1/test-org/conversation/conv-5/finish/', () => {
-            const never = new ReadableStream<Uint8Array>({ start() {} })
-            return new Response(never, { status: 204 })
-          })
-        )
-      )
-      const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
-      const controller = new AbortController()
-      controller.abort()
-      await expect(
-        resource.finishConversation('conv-5', undefined, { signal: controller.signal })
-      ).rejects.toThrow()
-    })
-
     test('throws ConflictError on 409 when already finished', async () => {
       server.use(
         ...withMockAuth(
@@ -597,10 +579,8 @@ describe('ConversationResource', () => {
           http.post(
             'https://api.example.com/v1/test-org/conversation/conversation_starter',
             async ({ request }) => {
-              const url = new URL(request.url)
               const body = (await request.json()) as any
               expect(body).toEqual({ topic: 'greeting' })
-              expect(url.searchParams.get('limit')).toBe('2')
               expect(request.headers.get('x-extra')).toBe('1')
               return HttpResponse.json(mockResponse)
             }
@@ -612,7 +592,6 @@ describe('ConversationResource', () => {
       const resource = new ConversationResource(client, 'test-org')
       const data = await resource.generateConversationStarters(
         { topic: 'greeting' } as any,
-        { limit: 2 } as any,
         { 'x-extra': '1' } as any
       )
       expect(data).toEqual(mockResponse as any)

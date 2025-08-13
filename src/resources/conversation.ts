@@ -91,15 +91,13 @@ export class ConversationResource {
 
   async finishConversation(
     conversationId: string,
-    headers?: operations['finish-conversation']['parameters']['header'],
-    options?: { signal?: AbortSignal }
+    headers?: operations['finish-conversation']['parameters']['header']
   ) {
     await this.c.POST('/v1/{organization}/conversation/{conversation_id}/finish/', {
       params: { path: { organization: this.orgId, conversation_id: conversationId } },
       headers,
       // No content is expected; parse as text to access raw Response
       parseAs: 'text',
-      ...(options?.signal && { signal: options.signal }),
     })
     return
   }
@@ -148,6 +146,8 @@ export class ConversationResource {
     )
   }
 
+  // Note: the OpenAPI response schema isn't correct for this endpoint.
+  // TODO -- fix response typing.
   async getMessageSource(
     conversationId: string,
     messageId: string,
@@ -169,12 +169,11 @@ export class ConversationResource {
 
   async generateConversationStarters(
     body: components['schemas']['src__app__endpoints__conversation__generate_conversation_starter__Request'],
-    queryParams?: operations['generate-conversation-starter']['parameters']['query'],
     headers?: operations['generate-conversation-starter']['parameters']['header']
   ) {
     return extractData(
       this.c.POST('/v1/{organization}/conversation/conversation_starter', {
-        params: { path: { organization: this.orgId }, query: queryParams },
+        params: { path: { organization: this.orgId } },
         body,
         headers,
       })

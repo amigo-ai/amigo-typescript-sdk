@@ -123,7 +123,7 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     client = new AmigoClient(testConfig)
 
     const form = new FormData()
-    const text = "Hello, I'm sending a text message from the SDK!"
+    const text = "Hello, I'm sending a text message from the TypeScriptSDK!"
     const blob = new Blob([text], { type: 'text/plain; charset=utf-8' })
     form.append('recorded_message', blob, 'message.txt')
 
