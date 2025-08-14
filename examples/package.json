@@ -17,6 +17,6 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@amigo-ai/sdk": "^1.0.0-alpha.3"
+    "@amigo-ai/sdk": "latest"
   }
 }
