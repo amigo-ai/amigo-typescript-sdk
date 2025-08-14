@@ -111,7 +111,7 @@ describe('OrganizationResource', () => {
     await expect(
       organizationResource.createAgent({
         agent_name: 'Test Agent',
-      } as components['schemas']['organization__create_agent__Request'])
+      })
     ).rejects.toThrow(NotFoundError)
   })
 

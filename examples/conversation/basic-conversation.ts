@@ -38,16 +38,11 @@ async function run(): Promise<void> {
       throw new Error('Conversation was not created (no id received).')
     }
 
-    // 2) Interact with the conversation via text and log streamed events
+    // 2) Interact with the conversation via text (high-level helper) and log streamed events
     console.log('Sending a text message to the conversation...')
-    const form = new FormData()
-    const text = 'Hello from the Amigo TypeScript SDK example!'
-    const blob = new Blob([text], { type: 'text/plain; charset=utf-8' })
-    form.append('recorded_message', blob, 'message.txt')
-
     const interactionEvents = await client.conversations.interactWithConversation(
       conversationId,
-      form,
+      'Hello from the Amigo TypeScript SDK example!',
       { request_format: 'text', response_format: 'text' }
     )
 

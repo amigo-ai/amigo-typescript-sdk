@@ -1,15 +1,10 @@
+import { BadRequestError } from '../core/errors'
 import type { AmigoFetch } from '../core/openapi-client'
 import { extractData, parseNdjsonStream } from '../core/utils'
 import type { components, operations } from '../generated/api-types'
 
-// Request body for Interact with Conversation
-export type InteractWithConversationBody =
-  | FormData // text: multipart/form-data with field `recorded_message`
-  | Blob // voice: raw audio (or text encoded to bytes)
-  | ArrayBuffer // voice
-  | Uint8Array // voice
-  | ReadableStream<Uint8Array> // voice streaming
-  | Buffer // Node.js environments: voice
+type VoiceData = Blob | Uint8Array | ReadableStream<Uint8Array>
+export type InteractionInput = string | VoiceData
 
 export class ConversationResource {
   constructor(
@@ -40,17 +35,52 @@ export class ConversationResource {
 
   async interactWithConversation(
     conversationId: string,
-    body: InteractWithConversationBody,
+    input: InteractionInput,
     queryParams: operations['interact-with-conversation']['parameters']['query'],
     headers?: operations['interact-with-conversation']['parameters']['header'],
     options?: { signal?: AbortSignal }
   ) {
+    // Build body based on requested format, then perform a single POST
+    let bodyToSend: FormData | VoiceData
+
+    if (queryParams.request_format === 'text') {
+      if (typeof input !== 'string') {
+        throw new BadRequestError("textMessage is required when request_format is 'text'")
+      }
+      const form = new FormData()
+      const blob = new Blob([input], { type: 'text/plain; charset=utf-8' })
+      form.append('recorded_message', blob, 'message.txt')
+      bodyToSend = form
+    } else if (queryParams.request_format === 'voice') {
+      if (typeof input === 'string') {
+        throw new BadRequestError(
+          "voice input must be a byte source when request_format is 'voice'"
+        )
+      }
+      bodyToSend = input
+    } else {
+      throw new BadRequestError('Unsupported or missing request_format in params')
+    }
+
+    // Normalize nested object params that must be sent as JSON strings
+    const normalizedQuery: operations['interact-with-conversation']['parameters']['query'] = {
+      ...(queryParams as any),
+    }
+    if (
+      typeof (normalizedQuery as any).request_audio_config === 'object' &&
+      (normalizedQuery as any).request_audio_config !== null
+    ) {
+      ;(normalizedQuery as any).request_audio_config = JSON.stringify(
+        (normalizedQuery as any).request_audio_config
+      )
+    }
+
     const resp = await this.c.POST('/v1/{organization}/conversation/{conversation_id}/interact', {
       params: {
         path: { organization: this.orgId, conversation_id: conversationId },
-        query: queryParams,
+        query: normalizedQuery,
       },
-      body,
+      body: bodyToSend,
       headers,
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),

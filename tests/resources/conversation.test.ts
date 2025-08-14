@@ -5,6 +5,7 @@ import { createAmigoFetch } from '../../src/core/openapi-client'
 import { ConversationResource } from '../../src/resources/conversation'
 import { withMockAuth, mockConfig } from '../test-helpers'
 import { NotFoundError, ConflictError } from '../../src/core/errors'
+import type { components } from '../../src/generated/api-types'
 
 // Helpers
 function createNdjsonStream(objects: unknown[]): ReadableStream<Uint8Array> {
@@ -58,8 +59,11 @@ describe('ConversationResource', () => {
       const resource = new ConversationResource(client, 'test-org')
 
       const events = await resource.createConversation(
-        { service_id: 'svc', service_version_set_name: 'release' } as any,
-        { response_format: 'text' } as any
+        {
+          service_id: 'svc',
+          service_version_set_name: 'release',
+        },
+        { response_format: 'text' }
       )
 
       let conversationId: string | undefined
@@ -67,12 +71,12 @@ describe('ConversationResource', () => {
       let sawNewMessage = false
 
       for await (const evt of events) {
-        if ((evt as any)?.type === 'conversation-created') {
-          conversationId = (evt as any).conversation_id
-        } else if ((evt as any)?.type === 'new-message') {
+        if (evt.type === 'conversation-created') {
+          conversationId = evt.conversation_id
+        } else if (evt.type === 'new-message') {
           sawNewMessage = true
-        } else if ((evt as any)?.type === 'interaction-complete') {
-          interactionId = (evt as any).interaction_id
+        } else if (evt.type === 'interaction-complete') {
+          interactionId = evt.interaction_id
         }
       }
 
@@ -92,7 +96,7 @@ describe('ConversationResource', () => {
             expect(body.service_id).toBe('svc')
             expect(body.service_version_set_name).toBe('release')
             expect(params.get('response_format')).toBe('text')
-            expect(request.headers.get('x-test-header')).toBe('abc')
+            expect(request.headers.get('x-mongo-cluster-name')).toBe('abc')
 
             // Return minimal NDJSON stream
             const stream = createNdjsonStream([{ type: 'ok' }])
@@ -108,9 +112,12 @@ describe('ConversationResource', () => {
       const resource = new ConversationResource(client, 'test-org')
 
       const events = await resource.createConversation(
-        { service_id: 'svc', service_version_set_name: 'release' } as any,
-        { response_format: 'text' } as any,
-        { 'x-test-header': 'abc' } as any
+        {
+          service_id: 'svc',
+          service_version_set_name: 'release',
+        },
+        { response_format: 'text' },
+        { 'x-mongo-cluster-name': 'abc' }
       )
 
       // Drain iterator to ensure handler runs fully
@@ -139,8 +146,11 @@ describe('ConversationResource', () => {
       await expect(
         (async () => {
           const events = await resource.createConversation(
-            { service_id: 'svc', service_version_set_name: 'release' } as any,
-            { response_format: 'text' } as any,
+            {
+              service_id: 'svc',
+              service_version_set_name: 'release',
+            },
+            { response_format: 'text' },
             undefined,
             { signal: controller.signal }
           )
@@ -170,8 +180,11 @@ describe('ConversationResource', () => {
       await expect(
         (async () => {
           const events = await resource.createConversation(
-            { service_id: 'svc', service_version_set_name: 'release' } as any,
-            { response_format: 'text' } as any
+            {
+              service_id: 'svc',
+              service_version_set_name: 'release',
+            },
+            { response_format: 'text' }
           )
           for await (const _ of events) {
             // no-op
@@ -182,7 +195,97 @@ describe('ConversationResource', () => {
   })
 
   describe('interactWithConversation', () => {
-    test('streams NDJSON events for text FormData with recorded_message', async () => {
+    test('simple: string input with request_format=text builds FormData and streams', async () => {
+      const stream = createNdjsonStream([
+        { type: 'new-message', message: 'hi' },
+        { type: 'interaction-complete', interaction_id: 'i-10' },
+      ])
+
+      server.use(
+        ...withMockAuth(
+          http.post(
+            'https://api.example.com/v1/test-org/conversation/conv-hl-text/interact',
+            async ({ request }) => {
+              // Validate multipart content type
+              expect(request.headers.get('content-type')).toContain('multipart/form-data')
+              const url = new URL(request.url)
+              expect(url.searchParams.get('request_format')).toBe('text')
+              expect(url.searchParams.get('response_format')).toBe('text')
+              return new Response(stream, {
+                status: 200,
+                headers: { 'Content-Type': 'application/x-ndjson' },
+              })
+            }
+          )
+        )
+      )
+
+      const client = createAmigoFetch(mockConfig)
+      const resource = new ConversationResource(client, 'test-org')
+
+      const events = await resource.interactWithConversation('conv-hl-text', 'hello world', {
+        request_format: 'text',
+        response_format: 'text',
+      })
+
+      let sawNewMessage = false
+      let interactionId: string | undefined
+      for await (const evt of events) {
+        if (evt.type === 'new-message') sawNewMessage = true
+        if (evt.type === 'interaction-complete') interactionId = evt.interaction_id
+      }
+      expect(sawNewMessage).toBe(true)
+      expect(interactionId).toBe('i-10')
+    })
+
+    test('simple: voice input (stream) with request_format=voice sends raw body and streams', async () => {
+      const responseStream = createNdjsonStream([
+        { type: 'interaction-complete', interaction_id: 'i-11' },
+      ])
+
+      server.use(
+        ...withMockAuth(
+          http.post(
+            'https://api.example.com/v1/test-org/conversation/conv-hl-voice/interact',
+            async ({ request }) => {
+              const url = new URL(request.url)
+              expect(url.searchParams.get('request_format')).toBe('voice')
+              expect(url.searchParams.get('response_format')).toBe('text')
+              expect(url.searchParams.get('audio_format')).toBe('mp3')
+              expect(url.searchParams.get('request_audio_config')).toBe('{"type":"mp3"}')
+              return new Response(responseStream, {
+                status: 200,
+                headers: { 'Content-Type': 'application/x-ndjson' },
+              })
+            }
+          )
+        )
+      )
+
+      const client = createAmigoFetch(mockConfig)
+      const resource = new ConversationResource(client, 'test-org')
+
+      const audioStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array([5, 6, 7]))
+          controller.close()
+        },
+      })
+
+      const events = await resource.interactWithConversation('conv-hl-voice', audioStream, {
+        request_format: 'voice',
+        response_format: 'text',
+        audio_format: 'mp3',
+        request_audio_config: { type: 'mp3' },
+      })
+
+      let interactionId: string | undefined
+      for await (const evt of events) {
+        if (evt.type === 'interaction-complete') interactionId = evt.interaction_id
+      }
+      expect(interactionId).toBe('i-11')
+    })
+    test('simple: text string builds multipart/form-data under the hood', async () => {
       const stream = createNdjsonStream([
         { type: 'new-message', message: 'hi' },
         { type: 'interaction-complete', interaction_id: 'i-2' },
@@ -210,28 +313,23 @@ describe('ConversationResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new ConversationResource(client, 'test-org')
 
-      const form = new FormData()
-      const blob = new Blob(['hello'], { type: 'text/plain; charset=utf-8' })
-      form.append('recorded_message', blob, 'message.txt')
-
-      const events = await resource.interactWithConversation('conv-1', form, {
+      const events = await resource.interactWithConversation('conv-1', 'hello', {
         request_format: 'text',
         response_format: 'text',
-      } as any)
+      })
 
       let sawNewMessage = false
       let interactionId: string | undefined
       for await (const evt of events) {
-        if ((evt as any)?.type === 'new-message') sawNewMessage = true
-        if ((evt as any)?.type === 'interaction-complete')
-          interactionId = (evt as any).interaction_id
+        if (evt.type === 'new-message') sawNewMessage = true
+        if (evt.type === 'interaction-complete') interactionId = evt.interaction_id
       }
 
       expect(sawNewMessage).toBe(true)
       expect(interactionId).toBe('i-2')
     })
 
-    test('accepts ReadableStream<Uint8Array> input (streaming) and passes headers/query', async () => {
+    test('simple: accepts ReadableStream<Uint8Array> input (streaming) and passes headers/query', async () => {
       const responseStream = createNdjsonStream([
         { type: 'interaction-complete', interaction_id: 'i-3' },
       ])
@@ -244,7 +342,9 @@ describe('ConversationResource', () => {
               const url = new URL(request.url)
               expect(url.searchParams.get('request_format')).toBe('voice')
               expect(url.searchParams.get('response_format')).toBe('text')
-              expect(request.headers.get('x-audio-format')).toBe('pcm16')
+              expect(url.searchParams.get('audio_format')).toBe('mp3')
+              expect(url.searchParams.get('request_audio_config')).toBe('{"type":"mp3"}')
+              expect(request.headers.get('x-mongo-cluster-name')).toBe('test-cluster')
               return new Response(responseStream, {
                 status: 200,
                 headers: { 'Content-Type': 'application/x-ndjson' },
@@ -267,8 +367,15 @@ describe('ConversationResource', () => {
       const events = await resource.interactWithConversation(
         'conv-2',
         audioStream,
-        { request_format: 'voice', response_format: 'text' } as any,
-        { 'x-audio-format': 'pcm16' } as any
+        {
+          request_format: 'voice',
+          response_format: 'text',
+          audio_format: 'mp3',
+          request_audio_config: { type: 'mp3' },
+        },
+        {
+          'x-mongo-cluster-name': 'test-cluster',
+        }
       )
 
       let interactionId: string | undefined
@@ -279,7 +386,7 @@ describe('ConversationResource', () => {
       expect(interactionId).toBe('i-3')
     })
 
-    test('supports AbortSignal cancellation', async () => {
+    test('simple: supports AbortSignal cancellation', async () => {
       server.use(
         ...withMockAuth(
           http.post('https://api.example.com/v1/test-org/conversation/conv-abort/interact', () => {
@@ -299,7 +406,12 @@ describe('ConversationResource', () => {
           const events = await resource.interactWithConversation(
             'conv-abort',
             new ReadableStream<Uint8Array>({ start() {} }),
-            { request_format: 'voice', response_format: 'text' } as any,
+            {
+              request_format: 'voice',
+              response_format: 'text',
+              audio_format: 'mp3',
+              request_audio_config: { type: 'mp3' },
+            },
             undefined,
             { signal: controller.signal }
           )
@@ -310,7 +422,7 @@ describe('ConversationResource', () => {
       ).rejects.toThrow()
     })
 
-    test('throws appropriate error on non-2xx responses (e.g., 4xx/5xx)', async () => {
+    test('simple: throws appropriate error on non-2xx responses (e.g., 4xx/5xx)', async () => {
       server.use(
         ...withMockAuth(
           http.post('https://api.example.com/v1/test-org/conversation/conv-err/interact', () =>
@@ -330,7 +442,12 @@ describe('ConversationResource', () => {
           const events = await resource.interactWithConversation(
             'conv-err',
             new ReadableStream<Uint8Array>({ start() {} }),
-            { request_format: 'voice', response_format: 'text' } as any
+            {
+              request_format: 'voice',
+              response_format: 'text',
+              audio_format: 'mp3',
+              request_audio_config: { type: 'mp3' },
+            }
           )
           for await (const _ of events) {
             // no-op
@@ -366,8 +483,8 @@ describe('ConversationResource', () => {
         limit: 10,
         continuation_token: 5,
         sort_by: ['-created_at'],
-      } as any)
-      expect(data).toEqual(mockResponse as any)
+      })
+      expect(data).toEqual(mockResponse as unknown)
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -409,8 +526,8 @@ describe('ConversationResource', () => {
         limit: 1,
         continuation_token: 7,
         sort_by: ['+created_at'],
-      } as any)
-      expect(data).toEqual(mockResponse as any)
+      })
+      expect(data).toEqual(mockResponse as unknown)
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -485,7 +602,7 @@ describe('ConversationResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new ConversationResource(client, 'test-org')
       const data = await resource.recommendResponsesForInteraction('conv-7', 'int-1')
-      expect(data).toEqual(mockResponse as any)
+      expect(data).toEqual(mockResponse)
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -519,7 +636,7 @@ describe('ConversationResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new ConversationResource(client, 'test-org')
       const data = await resource.getInteractionInsights('conv-8', 'int-2')
-      expect(data).toEqual(mockResponse as any)
+      expect(data).toEqual(mockResponse)
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -553,7 +670,7 @@ describe('ConversationResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new ConversationResource(client, 'test-org')
       const data = await resource.getMessageSource('conv-9', 'msg-1')
-      expect(data).toEqual(mockResponse as any)
+      expect(data).toEqual(mockResponse)
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -573,15 +690,24 @@ describe('ConversationResource', () => {
 
   describe('generateConversationStarters', () => {
     test('returns generated conversation starter(s) and passes query/headers', async () => {
-      const mockResponse = { starters: ['Hi there!'] }
+      const mockResponse: components['schemas']['conversation__generate_conversation_starter__Response'] =
+        {
+          prompts: [{ prompt: 'Hi there!', facets: [] }],
+        }
       server.use(
         ...withMockAuth(
           http.post(
             'https://api.example.com/v1/test-org/conversation/conversation_starter',
             async ({ request }) => {
               const body = (await request.json()) as any
-              expect(body).toEqual({ topic: 'greeting' })
-              expect(request.headers.get('x-extra')).toBe('1')
+              expect(body).toEqual({
+                service_id: 'x',
+                service_version_set_name: 'x',
+                facets: [],
+                min_count: 0,
+                max_count: 0,
+                generation_instructions: 'x',
+              })
               return HttpResponse.json(mockResponse)
             }
           )
@@ -591,10 +717,19 @@ describe('ConversationResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new ConversationResource(client, 'test-org')
       const data = await resource.generateConversationStarters(
-        { topic: 'greeting' } as any,
-        { 'x-extra': '1' } as any
+        {
+          service_id: 'x',
+          service_version_set_name: 'x',
+          facets: [],
+          min_count: 0,
+          max_count: 0,
+          generation_instructions: 'x',
+        },
+        {
+          'x-mongo-cluster-name': 'test-cluster',
+        }
       )
-      expect(data).toEqual(mockResponse as any)
+      expect(data).toEqual(mockResponse)
     })
 
     test('throws appropriate error on non-2xx responses (e.g., 4xx/5xx)', async () => {
@@ -610,7 +745,16 @@ describe('ConversationResource', () => {
       )
       const client = createAmigoFetch(mockConfig)
       const resource = new ConversationResource(client, 'test-org')
-      await expect(resource.generateConversationStarters({ topic: 'x' } as any)).rejects.toThrow()
+      await expect(
+        resource.generateConversationStarters({
+          service_id: 'x',
+          service_version_set_name: 'x',
+          facets: [],
+          min_count: 0,
+          max_count: 0,
+          generation_instructions: 'x',
+        })
+      ).rejects.toThrow()
     })
   })
 })

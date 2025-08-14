@@ -122,15 +122,11 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(conversationId).toBeDefined()
     client = new AmigoClient(testConfig)
 
-    const form = new FormData()
-    const text = "Hello, I'm sending a text message from the TypeScriptSDK!"
-    const blob = new Blob([text], { type: 'text/plain; charset=utf-8' })
-    form.append('recorded_message', blob, 'message.txt')
-
-    const events = await client.conversations.interactWithConversation(conversationId!, form, {
-      request_format: 'text',
-      response_format: 'text',
-    })
+    const events = await client.conversations.interactWithConversation(
+      conversationId!,
+      "Hello, I'm sending a text message from the TypeScriptSDK!",
+      { request_format: 'text', response_format: 'text' }
+    )
 
     let sawNewMessage = false
     let sawInteractionComplete = false
