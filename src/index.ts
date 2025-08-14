@@ -56,3 +56,6 @@ function validateConfig(config: AmigoSdkConfig) {
 
 // Export all errors as a namespace to avoid polluting the main import space
 export * as errors from './core/errors'
+
+// Re-export useful types for consumers
+export type { components, operations, paths } from './generated/api-types'

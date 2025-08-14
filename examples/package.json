@@ -1,0 +1,22 @@
+{
+  "name": "sdk-examples",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx conversation/basic-conversation.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "type": "module",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^17.2.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@amigo-ai/sdk": "file:../artifacts/amigo-ai-sdk-1.0.0-alpha.2.tgz"
+  }
+}

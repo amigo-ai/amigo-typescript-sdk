@@ -18,7 +18,7 @@ export class ConversationResource {
   ) {}
 
   async createConversation(
-    body: components['schemas']['src__app__endpoints__conversation__create_conversation__Request'],
+    body: components['schemas']['conversation__create_conversation__Request'],
     queryParams: operations['create-conversation']['parameters']['query'],
     headers?: operations['create-conversation']['parameters']['header'],
     options?: { signal?: AbortSignal }
@@ -33,9 +33,9 @@ export class ConversationResource {
     })
 
     // onResponse middleware throws for non-2xx; if we reach here, it's OK.
-    return parseNdjsonStream<
-      components['schemas']['src__app__endpoints__conversation__create_conversation__Response']
-    >(resp.response)
+    return parseNdjsonStream<components['schemas']['conversation__create_conversation__Response']>(
+      resp.response
+    )
   }
 
   async interactWithConversation(
@@ -57,7 +57,7 @@ export class ConversationResource {
     })
 
     return parseNdjsonStream<
-      components['schemas']['src__app__endpoints__conversation__interact_with_conversation__Response']
+      components['schemas']['conversation__interact_with_conversation__Response']
     >(resp.response)
   }
 
@@ -168,7 +168,7 @@ export class ConversationResource {
   }
 
   async generateConversationStarters(
-    body: components['schemas']['src__app__endpoints__conversation__generate_conversation_starter__Request'],
+    body: components['schemas']['conversation__generate_conversation_starter__Request'],
     headers?: operations['generate-conversation-starter']['parameters']['header']
   ) {
     return extractData(

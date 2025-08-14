@@ -29,7 +29,7 @@ export class OrganizationResource {
    * @returns The agent details
    */
   async createAgent(
-    body: components['schemas']['src__app__endpoints__organization__create_agent__Request'],
+    body: components['schemas']['organization__create_agent__Request'],
     headers?: operations['create-agent']['parameters']['header']
   ) {
     return extractData(
@@ -51,7 +51,7 @@ export class OrganizationResource {
    */
   async createAgentVersion(
     agentId: string,
-    body: components['schemas']['src__app__endpoints__organization__create_agent_version__Request'],
+    body: components['schemas']['organization__create_agent_version__Request'],
     queryParams?: operations['create-agent-version']['parameters']['query'],
     headers?: operations['create-agent-version']['parameters']['header']
   ) {

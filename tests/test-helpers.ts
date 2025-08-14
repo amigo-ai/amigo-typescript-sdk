@@ -13,7 +13,7 @@ export const mockConfig: AmigoSdkConfig = {
   baseUrl: 'https://api.example.com',
 }
 
-export const createAgentVersionRequestBody: components['schemas']['src__app__endpoints__organization__create_agent_version__Request'] =
+export const createAgentVersionRequestBody: components['schemas']['organization__create_agent_version__Request'] =
   {
     initials: 'SDK',
     identity: {

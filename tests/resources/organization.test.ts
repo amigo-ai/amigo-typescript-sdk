@@ -8,7 +8,7 @@ import type { components } from '../../src/generated/api-types'
 import { mockConfig, withMockAuth, createAgentVersionRequestBody } from '../test-helpers'
 
 // Mock organization response
-const mockOrganizationResponse: components['schemas']['src__app__endpoints__organization__get_organization__Response'] =
+const mockOrganizationResponse: components['schemas']['organization__get_organization__Response'] =
   {
     org_id: 'test-org',
     org_name: 'Test Organization',
@@ -72,10 +72,9 @@ describe('OrganizationResource', () => {
   })
 
   test('createAgent returns data', async () => {
-    const mockCreateAgentResponse: components['schemas']['src__app__endpoints__organization__create_agent__Response'] =
-      {
-        id: 'agent-123',
-      }
+    const mockCreateAgentResponse: components['schemas']['organization__create_agent__Response'] = {
+      id: 'agent-123',
+    }
 
     server.use(
       ...withMockAuth(
@@ -88,10 +87,9 @@ describe('OrganizationResource', () => {
     const client = createAmigoFetch(mockConfig)
     const organizationResource = new OrganizationResource(client, 'test-org')
 
-    const body: components['schemas']['src__app__endpoints__organization__create_agent__Request'] =
-      {
-        agent_name: 'Test Agent',
-      }
+    const body: components['schemas']['organization__create_agent__Request'] = {
+      agent_name: 'Test Agent',
+    }
 
     const result = await organizationResource.createAgent(body)
     expect(result).toEqual(mockCreateAgentResponse)
@@ -113,12 +111,12 @@ describe('OrganizationResource', () => {
     await expect(
       organizationResource.createAgent({
         agent_name: 'Test Agent',
-      } as components['schemas']['src__app__endpoints__organization__create_agent__Request'])
+      } as components['schemas']['organization__create_agent__Request'])
     ).rejects.toThrow(NotFoundError)
   })
 
   test('createAgentVersion returns data', async () => {
-    const mockCreateVersionResponse: components['schemas']['src__app__endpoints__organization__create_agent_version__Response'] =
+    const mockCreateVersionResponse: components['schemas']['organization__create_agent_version__Response'] =
       {
         id: 'ver-1',
         version: 1,
@@ -166,19 +164,18 @@ describe('OrganizationResource', () => {
   })
 
   test('getAgents returns data', async () => {
-    const mockAgentsResponse: components['schemas']['src__app__endpoints__organization__get_agents__Response'] =
-      {
-        agents: [
-          {
-            id: 'agent-1',
-            name: 'Agent One',
-            deprecated: false,
-            latest_version: 1,
-          },
-        ],
-        has_more: false,
-        continuation_token: null,
-      }
+    const mockAgentsResponse: components['schemas']['organization__get_agents__Response'] = {
+      agents: [
+        {
+          id: 'agent-1',
+          name: 'Agent One',
+          deprecated: false,
+          latest_version: 1,
+        },
+      ],
+      has_more: false,
+      continuation_token: null,
+    }
 
     server.use(
       ...withMockAuth(
@@ -250,12 +247,11 @@ describe('OrganizationResource', () => {
   })
 
   test('getAgentVersions returns data (empty list)', async () => {
-    const mockAgentVersions: components['schemas']['src__app__endpoints__organization__get_agent_versions__Response'] =
-      {
-        agent_versions: [],
-        has_more: false,
-        continuation_token: null,
-      }
+    const mockAgentVersions: components['schemas']['organization__get_agent_versions__Response'] = {
+      agent_versions: [],
+      has_more: false,
+      continuation_token: null,
+    }
 
     server.use(
       ...withMockAuth(
@@ -298,12 +294,11 @@ describe('OrganizationResource', () => {
   })
 
   test('getAgents passes query parameters correctly', async () => {
-    const mockAgentsResponse: components['schemas']['src__app__endpoints__organization__get_agents__Response'] =
-      {
-        agents: [],
-        has_more: false,
-        continuation_token: null,
-      }
+    const mockAgentsResponse: components['schemas']['organization__get_agents__Response'] = {
+      agents: [],
+      has_more: false,
+      continuation_token: null,
+    }
 
     server.use(
       ...withMockAuth(
@@ -333,7 +328,7 @@ describe('OrganizationResource', () => {
   })
 
   test('createAgentVersion passes query parameter version correctly', async () => {
-    const mockCreateVersionResponse: components['schemas']['src__app__endpoints__organization__create_agent_version__Response'] =
+    const mockCreateVersionResponse: components['schemas']['organization__create_agent_version__Response'] =
       {
         id: 'ver-2',
         version: 2,
@@ -366,12 +361,11 @@ describe('OrganizationResource', () => {
   })
 
   test('getAgentVersions passes query parameters correctly', async () => {
-    const mockAgentVersions: components['schemas']['src__app__endpoints__organization__get_agent_versions__Response'] =
-      {
-        agent_versions: [],
-        has_more: false,
-        continuation_token: null,
-      }
+    const mockAgentVersions: components['schemas']['organization__get_agent_versions__Response'] = {
+      agent_versions: [],
+      has_more: false,
+      continuation_token: null,
+    }
 
     server.use(
       ...withMockAuth(

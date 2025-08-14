@@ -20,7 +20,8 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings 0",
-    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix"
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
+    "pack:local": "npm run build && mkdir -p artifacts && TARBALL=$(npm pack) && mv \"$TARBALL\" artifacts/ && echo Packed: artifacts/$TARBALL"
   },
   "exports": {
     ".": {

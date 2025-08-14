@@ -12,7 +12,8 @@
     "skipLibCheck": true,
     "jsx": "preserve",
     "rootDir": ".",
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]

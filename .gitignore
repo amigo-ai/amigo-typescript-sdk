@@ -76,3 +76,6 @@ __snapshots__/
 
 # OpenAPI code-gen
 src/generated/
+
+# Local tarballs
+artifacts/

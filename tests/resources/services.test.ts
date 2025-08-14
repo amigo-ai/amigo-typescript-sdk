@@ -20,13 +20,12 @@ const mockService: components['schemas']['ServiceInstance'] = {
 }
 
 // Mock services response
-const mockServicesResponse: components['schemas']['src__app__endpoints__service__get_services__Response'] =
-  {
-    services: [mockService],
-    has_more: false,
-    continuation_token: null,
-    filter_values: null,
-  }
+const mockServicesResponse: components['schemas']['service__get_services__Response'] = {
+  services: [mockService],
+  has_more: false,
+  continuation_token: null,
+  filter_values: null,
+}
 
 // MSW server setup
 const server = setupServer()

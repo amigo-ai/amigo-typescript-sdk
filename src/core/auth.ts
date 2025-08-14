@@ -4,8 +4,7 @@ import type { AmigoSdkConfig } from '..'
 import { AmigoError, AuthenticationError, NetworkError, ParseError, createApiError } from './errors'
 import { isNetworkError, parseResponseBody } from './utils'
 
-type SignInWithApiKeyResponse =
-  components['schemas']['src__app__endpoints__user__sign_in_with_api_key__Response']
+type SignInWithApiKeyResponse = components['schemas']['user__sign_in_with_api_key__Response']
 
 /** Helper function to trade API key for a bearer token */
 export async function getBearerToken(config: AmigoSdkConfig): Promise<SignInWithApiKeyResponse> {
