@@ -6,6 +6,11 @@ import type { components, operations } from '../generated/api-types'
 type VoiceData = Blob | Uint8Array | ReadableStream<Uint8Array>
 export type InteractionInput = string | VoiceData
 
+type InteractQuery = operations['interact-with-conversation']['parameters']['query']
+type InteractQuerySerialized = Omit<InteractQuery, 'request_audio_config'> & {
+  request_audio_config?: string | null
+}
+
 export class ConversationResource {
   constructor(
     private c: AmigoFetch,
@@ -63,22 +68,19 @@ export class ConversationResource {
     }
 
     // Normalize nested object params that must be sent as JSON strings
-    const normalizedQuery: operations['interact-with-conversation']['parameters']['query'] = {
-      ...(queryParams as any),
-    }
-    if (
-      typeof (normalizedQuery as any).request_audio_config === 'object' &&
-      (normalizedQuery as any).request_audio_config !== null
-    ) {
-      ;(normalizedQuery as any).request_audio_config = JSON.stringify(
-        (normalizedQuery as any).request_audio_config
-      )
+    const normalizedQuery: InteractQuerySerialized = {
+      ...queryParams,
+      request_audio_config:
+        typeof queryParams.request_audio_config === 'object' &&
+        queryParams.request_audio_config !== null
+          ? JSON.stringify(queryParams.request_audio_config)
+          : (queryParams.request_audio_config ?? undefined),
     }
 
     const resp = await this.c.POST('/v1/{organization}/conversation/{conversation_id}/interact', {
       params: {
         path: { organization: this.orgId, conversation_id: conversationId },
-        query: normalizedQuery,
+        query: normalizedQuery as unknown as InteractQuery,
       },
       body: bodyToSend,
       headers,
