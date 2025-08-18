@@ -210,9 +210,7 @@ describe('UserResource', () => {
   })
 
   describe('updateUser', () => {
-    test('updates and returns user info, sending body and headers', async () => {
-      const mockResponse = { user_id: 'u-1', first_name: 'Grace', last_name: 'Hopper' }
-
+    test('returns void on 204 success and sends body and headers', async () => {
       server.use(
         ...withMockAuth(
           http.post('https://api.example.com/v1/test-org/user/u-1/user', async ({ request }) => {
@@ -221,7 +219,7 @@ describe('UserResource', () => {
             expect(body.first_name).toBe('Grace')
             expect(body.last_name).toBe('Hopper')
             expect(request.headers.get('x-mongo-cluster-name')).toBe('xyz')
-            return HttpResponse.json(mockResponse)
+            return HttpResponse.text('', { status: 204, statusText: 'No Content' })
           })
         )
       )
@@ -231,14 +229,13 @@ describe('UserResource', () => {
       const body: components['schemas']['user__update_user_info__Request'] = {
         first_name: 'Grace',
         last_name: 'Hopper',
-        preferred_language: null,
-        timezone: null,
+        preferred_language: {},
+        timezone: {},
       }
       const headers: operations['update-user-info']['parameters']['header'] = {
         'x-mongo-cluster-name': 'xyz',
       }
-      const result = await resource.updateUser('u-1', body, headers)
-      expect(result).toEqual(mockResponse)
+      await expect(resource.updateUser('u-1', body, headers)).resolves.toBeUndefined()
     })
 
     test('throws ValidationError on 422', async () => {
