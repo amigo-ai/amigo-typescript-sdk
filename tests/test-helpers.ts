@@ -13,32 +13,6 @@ export const mockConfig: AmigoSdkConfig = {
   baseUrl: 'https://api.example.com',
 }
 
-export const createAgentVersionRequestBody: components['schemas']['organization__create_agent_version__Request'] =
-  {
-    initials: 'SDK',
-    identity: {
-      name: 'sdk_integration_test_agent',
-      role: 'sdk_integration_test_role',
-      developed_by: 'SDK Integration Tests',
-      default_spoken_language: 'eng',
-      relationship_to_developer: {
-        ownership: 'user',
-        type: 'assistant',
-        conversation_visibility: 'visible',
-        thought_visibility: 'hidden',
-      },
-    },
-    background: 'SDK integration test background',
-    behaviors: [],
-    communication_patterns: [],
-    voice_config: {
-      voice_id: 'iP95p4xoKVk53GoZ742B',
-      stability: 0.35,
-      similarity_boost: 0.9,
-      style: 0,
-    },
-  }
-
 /**
  * Standard successful authentication response
  */

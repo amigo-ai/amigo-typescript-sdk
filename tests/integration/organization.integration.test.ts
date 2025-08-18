@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { config } from 'dotenv'
 import { AmigoClient, errors } from '../../src/index'
-import { createAgentVersionRequestBody } from '../test-helpers'
 
 // Load environment variables from .env file
 config()
@@ -57,46 +56,6 @@ describe('Integration Tests - Real API', () => {
     client = new AmigoClient(invalidConfig)
 
     await expect(client.organizations.getOrganization()).rejects.toThrow(errors.AuthenticationError)
-  })
-
-  test('should create and delete an agent successfully', async () => {
-    client = new AmigoClient(testConfig)
-    const uniqueName = `sdk_test_agent_${Math.random().toString(36).slice(2, 10)}`
-
-    const agent = await client.organizations.createAgent({ agent_name: uniqueName })
-    expect(agent).toBeDefined()
-    expect(typeof agent.id).toBe('string')
-
-    // Best-effort cleanup
-    await client.organizations.deleteAgent(agent.id)
-  })
-
-  test('should create an agent version and list it via getAgentVersions', async () => {
-    client = new AmigoClient(testConfig)
-    const uniqueName = `sdk_test_agent_${Math.random().toString(36).slice(2, 10)}`
-
-    // Create an agent to attach a version to
-    const agent = await client.organizations.createAgent({ agent_name: uniqueName })
-    expect(agent).toBeDefined()
-
-    try {
-      // Create agent version
-      const createdVersion = await client.organizations.createAgentVersion(
-        agent.id,
-        createAgentVersionRequestBody
-      )
-      expect(createdVersion).toBeDefined()
-      expect(typeof createdVersion.id).toBe('string')
-
-      // Verify the version appears in the versions list
-      const versions = await client.organizations.getAgentVersions(agent.id)
-      expect(versions).toBeDefined()
-      expect(Array.isArray(versions.agent_versions)).toBe(true)
-      expect(versions.agent_versions.some(v => v.id === createdVersion.id)).toBe(true)
-    } finally {
-      // Best-effort cleanup
-      await client.organizations.deleteAgent(agent.id)
-    }
   })
 
   test('should list agents for the organization', async () => {

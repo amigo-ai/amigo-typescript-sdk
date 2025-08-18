@@ -5,7 +5,7 @@ import { OrganizationResource } from '../../src/resources/organization'
 import { createAmigoFetch } from '../../src/core/openapi-client'
 import { NotFoundError } from '../../src/core/errors'
 import type { components } from '../../src/generated/api-types'
-import { mockConfig, withMockAuth, createAgentVersionRequestBody } from '../test-helpers'
+import { mockConfig, withMockAuth } from '../test-helpers'
 
 // Mock organization response
 const mockOrganizationResponse: components['schemas']['organization__get_organization__Response'] =
@@ -71,98 +71,6 @@ describe('OrganizationResource', () => {
     await expect(organizationResource.getOrganization()).rejects.toThrow(NotFoundError)
   })
 
-  test('createAgent returns data', async () => {
-    const mockCreateAgentResponse: components['schemas']['organization__create_agent__Response'] = {
-      id: 'agent-123',
-    }
-
-    server.use(
-      ...withMockAuth(
-        http.post('https://api.example.com/v1/test-org/organization/agent', async () => {
-          return HttpResponse.json(mockCreateAgentResponse)
-        })
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'test-org')
-
-    const body: components['schemas']['organization__create_agent__Request'] = {
-      agent_name: 'Test Agent',
-    }
-
-    const result = await organizationResource.createAgent(body)
-    expect(result).toEqual(mockCreateAgentResponse)
-    expect(result.id).toBe('agent-123')
-  })
-
-  test('createAgent throws NotFoundError on 404', async () => {
-    server.use(
-      ...withMockAuth(
-        http.post('https://api.example.com/v1/nonexistent-org/organization/agent', async () => {
-          return HttpResponse.json(null, { status: 404, statusText: 'Not Found' })
-        })
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'nonexistent-org')
-
-    await expect(
-      organizationResource.createAgent({
-        agent_name: 'Test Agent',
-      })
-    ).rejects.toThrow(NotFoundError)
-  })
-
-  test('createAgentVersion returns data', async () => {
-    const mockCreateVersionResponse: components['schemas']['organization__create_agent_version__Response'] =
-      {
-        id: 'ver-1',
-        version: 1,
-        created_at: new Date().toISOString(),
-      }
-
-    server.use(
-      ...withMockAuth(
-        http.post('https://api.example.com/v1/test-org/organization/agent/agent-123/', async () => {
-          return HttpResponse.json(mockCreateVersionResponse)
-        })
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'test-org')
-
-    const result = await organizationResource.createAgentVersion(
-      'agent-123',
-      createAgentVersionRequestBody
-    )
-    expect(result).toEqual(mockCreateVersionResponse)
-    expect(result.id).toBe('ver-1')
-    expect(result.version).toBe(1)
-  })
-
-  test('createAgentVersion throws NotFoundError on 404', async () => {
-    server.use(
-      ...withMockAuth(
-        http.post(
-          'https://api.example.com/v1/nonexistent-org/organization/agent/missing-agent/',
-          async () => {
-            return HttpResponse.json(null, { status: 404, statusText: 'Not Found' })
-          }
-        )
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'nonexistent-org')
-
-    await expect(
-      organizationResource.createAgentVersion('missing-agent', createAgentVersionRequestBody)
-    ).rejects.toThrow(NotFoundError)
-  })
-
   test('getAgents returns data', async () => {
     const mockAgentsResponse: components['schemas']['organization__get_agents__Response'] = {
       agents: [
@@ -211,39 +119,6 @@ describe('OrganizationResource', () => {
     const organizationResource = new OrganizationResource(client, 'test-org')
 
     await expect(organizationResource.getAgents()).rejects.toThrow()
-  })
-
-  test('deleteAgent succeeds', async () => {
-    server.use(
-      ...withMockAuth(
-        http.delete('https://api.example.com/v1/test-org/organization/agent/agent-1/', async () => {
-          return HttpResponse.json({})
-        })
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'test-org')
-
-    await expect(organizationResource.deleteAgent('agent-1')).resolves.toBeUndefined()
-  })
-
-  test('deleteAgent throws NotFoundError on 404', async () => {
-    server.use(
-      ...withMockAuth(
-        http.delete(
-          'https://api.example.com/v1/nonexistent-org/organization/agent/missing-agent/',
-          async () => {
-            return HttpResponse.json(null, { status: 404, statusText: 'Not Found' })
-          }
-        )
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'nonexistent-org')
-
-    await expect(organizationResource.deleteAgent('missing-agent')).rejects.toThrow(NotFoundError)
   })
 
   test('getAgentVersions returns data (empty list)', async () => {
@@ -325,39 +200,6 @@ describe('OrganizationResource', () => {
       limit: 10,
       continuation_token: 5,
     })
-  })
-
-  test('createAgentVersion passes query parameter version correctly', async () => {
-    const mockCreateVersionResponse: components['schemas']['organization__create_agent_version__Response'] =
-      {
-        id: 'ver-2',
-        version: 2,
-        created_at: new Date().toISOString(),
-      }
-
-    server.use(
-      ...withMockAuth(
-        http.post(
-          'https://api.example.com/v1/test-org/organization/agent/agent-123/',
-          async ({ request }) => {
-            const url = new URL(request.url)
-            const params = url.searchParams
-            expect(params.get('version')).toBe('2')
-            return HttpResponse.json(mockCreateVersionResponse)
-          }
-        )
-      )
-    )
-
-    const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'test-org')
-
-    const result = await organizationResource.createAgentVersion(
-      'agent-123',
-      createAgentVersionRequestBody,
-      { version: 2 }
-    )
-    expect(result).toEqual(mockCreateVersionResponse)
   })
 
   test('getAgentVersions passes query parameters correctly', async () => {
