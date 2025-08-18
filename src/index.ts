@@ -3,6 +3,7 @@ import { createAmigoFetch } from './core/openapi-client'
 import { OrganizationResource } from './resources/organization'
 import { ConversationResource } from './resources/conversation'
 import { ServiceResource } from './resources/services'
+import { UserResource } from './resources/user'
 
 export interface AmigoSdkConfig {
   /** API key from Amigo dashboard */
@@ -23,6 +24,7 @@ export class AmigoClient {
   readonly organizations: OrganizationResource
   readonly conversations: ConversationResource
   readonly services: ServiceResource
+  readonly users: UserResource
   readonly config: AmigoSdkConfig
 
   constructor(config: AmigoSdkConfig) {
@@ -32,6 +34,7 @@ export class AmigoClient {
     this.organizations = new OrganizationResource(api, this.config.orgId)
     this.conversations = new ConversationResource(api, this.config.orgId)
     this.services = new ServiceResource(api, this.config.orgId)
+    this.users = new UserResource(api, this.config.orgId)
   }
 }
 

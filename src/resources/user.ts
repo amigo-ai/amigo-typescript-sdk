@@ -48,12 +48,13 @@ export class UserResource {
     body: components['schemas']['user__update_user_info__Request'],
     headers?: operations['update-user-info']['parameters']['header']
   ) {
-    return extractData(
-      this.c.POST('/v1/{organization}/user/{requested_user_id}/user', {
-        params: { path: { organization: this.orgId, requested_user_id: userId } },
-        body,
-        headers,
-      })
-    )
+    // UPDATE endpoint returns no content (e.g., 204 No Content).
+    // Our middleware already throws on non-2xx responses, so simply await the call.
+    await this.c.POST('/v1/{organization}/user/{requested_user_id}/user', {
+      params: { path: { organization: this.orgId, requested_user_id: userId } },
+      body,
+      headers,
+    })
+    return
   }
 }
