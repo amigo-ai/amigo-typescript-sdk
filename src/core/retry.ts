@@ -1,5 +1,3 @@
-import fetchRetry from 'fetch-retry'
-
 export type RetryOptions = {
   /** Maximum number of attempts to make (default: 3) */
   maxAttempts?: number
@@ -53,75 +51,129 @@ function computeBackoffWithJitterMs(
   return Math.random() * windowMs
 }
 
-/**
- * Create a fetch function.
- * This wraps an underlying fetch (globalThis.fetch by default) with fetch-retry, and
- * injects per-call retryOn/retryDelay computed from the HTTP method and response status.
- */
+function isAbortError(err: unknown): boolean {
+  return (
+    (typeof DOMException !== 'undefined' &&
+      err instanceof DOMException &&
+      err.name === 'AbortError') ||
+    (typeof err === 'object' &&
+      err !== null &&
+      'name' in err &&
+      (err as { name?: unknown }).name === 'AbortError')
+  )
+}
+
+function isTransportRejection(err: unknown): boolean {
+  // Fetch rejections are network-layer failures or aborts; we exclude aborts
+  return !!err && !isAbortError(err)
+}
+
+async function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (ms <= 0) return
+  await new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'))
+      return
+    }
+    const timer = setTimeout(() => {
+      cleanup()
+      resolve()
+    }, ms)
+    const onAbort = () => {
+      cleanup()
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    const cleanup = () => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
 export function createRetryingFetch(
   retryOptions?: RetryOptions,
   baseFetch?: typeof fetch
 ): typeof fetch {
   const resolved = resolveRetryOptions(retryOptions)
+  const underlying: typeof fetch = baseFetch ?? (globalThis.fetch as typeof fetch)
 
-  const underlying = baseFetch ?? (globalThis.fetch as typeof fetch)
-  const baseWrapped = fetchRetry(underlying)
-
-  const customFetch = (input: any, init?: any) => {
+  const retryingFetch: typeof fetch = async (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ): Promise<Response> => {
     const inputMethod =
       typeof Request !== 'undefined' && input instanceof Request ? input.method : undefined
     const method = ((init?.method ?? inputMethod ?? 'GET') as string).toUpperCase()
+    const signal = init?.signal
 
     const isMethodRetryableByDefault = resolved.retryOnMethods.has(method)
-    const retries = Math.max(0, (resolved.maxAttempts ?? 1) - 1)
+    const maxAttempts = Math.max(1, resolved.maxAttempts)
 
-    const retryDelay = (attempt: number, error: unknown, response: Response | null): number => {
-      // attempt is zero-based in fetch-retry
-      const retryAfterMs = response?.headers
-        ? parseRetryAfterMs(response.headers.get('Retry-After'), resolved.maxDelayMs)
-        : null
-      if (retryAfterMs !== null) {
-        return retryAfterMs
-      }
-      return computeBackoffWithJitterMs(attempt, resolved.backoffBaseMs, resolved.maxDelayMs)
-    }
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      let response: Response | null = null
+      let error: unknown = null
 
-    const retryOn = (attempt: number, error: unknown, response: Response | null): boolean => {
-      // Transport errors
-      if (error != null) {
-        return isMethodRetryableByDefault
+      try {
+        response = await underlying(input, init)
+      } catch (err) {
+        error = err
       }
 
-      if (!response) return false
-      const status = response.status
+      if (!error && response && response.ok) {
+        return response
+      }
 
-      // Method-specific rules
-      if (method === 'POST') {
-        // Only retry POST on 429 when Retry-After exists
-        if (status === 429 && response.headers?.get('Retry-After')) {
-          return true
+      let shouldRetry = false
+      let delayMs: number | null = null
+
+      if (isTransportRejection(error)) {
+        shouldRetry = isMethodRetryableByDefault
+        if (shouldRetry) {
+          delayMs = computeBackoffWithJitterMs(
+            attempt - 1,
+            resolved.backoffBaseMs,
+            resolved.maxDelayMs
+          )
         }
-        return false
+      } else if (response) {
+        const status = response.status
+        if (method === 'POST') {
+          if (status === 429) {
+            const ra = response.headers.get('Retry-After')
+            const parsed = parseRetryAfterMs(ra, resolved.maxDelayMs)
+            if (parsed !== null) {
+              shouldRetry = true
+              delayMs = parsed
+            }
+          }
+        } else if (isMethodRetryableByDefault && resolved.retryOnStatus.has(status)) {
+          const ra = response.headers.get('Retry-After')
+          delayMs =
+            parseRetryAfterMs(ra, resolved.maxDelayMs) ??
+            computeBackoffWithJitterMs(attempt - 1, resolved.backoffBaseMs, resolved.maxDelayMs)
+          shouldRetry = true
+        }
       }
 
-      // Other methods: only those configured (defaults to GET)
-      if (!isMethodRetryableByDefault) return false
+      const attemptsRemain = attempt < maxAttempts
+      if (!shouldRetry || !attemptsRemain) {
+        if (error) throw error
+        return response as Response
+      }
 
-      return resolved.retryOnStatus.has(status)
+      if (signal?.aborted) {
+        if (error) throw error
+        return response as Response
+      }
+
+      await abortableSleep(delayMs ?? 0, signal ?? undefined)
     }
 
-    // Pass through all original init options, and add per-call retry options
-    const mergedInit = {
-      ...init,
-      retries,
-      retryDelay,
-      retryOn,
-    } as any
-
-    return baseWrapped(input as any, mergedInit as any)
+    throw new Error('Retry loop exited unexpectedly')
   }
 
-  return customFetch as unknown as typeof fetch
+  return retryingFetch
 }
 
 export type { RetryOptions as AmigoRetryOptions }

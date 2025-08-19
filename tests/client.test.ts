@@ -2,7 +2,13 @@ import { describe, test, expect, beforeAll, beforeEach, afterAll, afterEach, vi 
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { createAmigoFetch } from '../src/core/openapi-client'
-import { NetworkError, AmigoError, NotFoundError, RateLimitError } from '../src/core/errors'
+import {
+  NetworkError,
+  AmigoError,
+  NotFoundError,
+  RateLimitError,
+  ServerError,
+} from '../src/core/errors'
 import { mockConfig, withMockAuth, mockSuccessfulAuth } from './test-helpers'
 
 // MSW server setup
@@ -370,9 +376,254 @@ describe('Retry logic', () => {
     }
   })
 
-  test.todo('Max attempts: 500→500→500; two sleeps then server error thrown')
+  test('abortableSleep: abort during backoff cancels sleep', async () => {
+    let calls = 0
+    server.use(
+      ...withMockAuth(
+        http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+          calls += 1
+          // Always return 500 to trigger a retryable status
+          return HttpResponse.json(null, { status: 500 })
+        })
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    const controller = new AbortController()
+
+    const reqPromise = client.GET('/v1/{organization}/organization/', {
+      params: { path: { organization: 'test-org-id' } },
+      signal: controller.signal,
+    })
+
+    // Abort while sleeping before the next attempt
+    Promise.resolve().then(() => controller.abort())
+
+    await expect(reqPromise).rejects.toThrow(/aborted/i)
+    // No need to advance timers; abort rejects the sleep immediately
+  })
+
+  test('retry loop: aborted signal before scheduling next attempt exits promptly', async () => {
+    let calls = 0
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    server.use(
+      ...withMockAuth(
+        http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+          calls += 1
+          return HttpResponse.json(null, { status: 500 })
+        })
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    const controller = new AbortController()
+
+    const reqPromise = client.GET('/v1/{organization}/organization/', {
+      params: { path: { organization: 'test-org-id' } },
+      signal: controller.signal,
+    })
+
+    // Abort immediately after first response, before scheduling any timer
+    Promise.resolve().then(() => controller.abort())
+
+    await expect(reqPromise).rejects.toThrow()
+    // Because signal was aborted, we should not schedule backoff
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
+    expect(calls).toBe(1)
+  })
+
+  test('Max attempts: 500→500→500; two sleeps then server error thrown', async () => {
+    let calls = 0
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    server.use(
+      ...withMockAuth(
+        http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+          calls += 1
+          return HttpResponse.json(null, { status: 500 })
+        })
+      )
+    )
+
+    const client = createAmigoFetch({
+      ...mockConfig,
+      retry: { maxAttempts: 3 },
+    } as any)
+
+    const req = client
+      .GET('/v1/{organization}/organization/', {
+        params: { path: { organization: 'test-org-id' } },
+      })
+      .catch(e => e)
+
+    await vi.runAllTimersAsync()
+    const err = await req
+    expect(err).toBeInstanceOf(ServerError)
+    expect(calls).toBeGreaterThanOrEqual(3)
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(2)
+  })
+
+  // Additional coverage tests
+  test('GET 429 with invalid Retry-After falls back to backoff delay', async () => {
+    let calls = 0
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    server.use(
+      ...withMockAuth(
+        http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+          calls += 1
+          if (calls === 1) {
+            return HttpResponse.json(
+              { error: 'rl' },
+              { status: 429, headers: { 'Retry-After': 'invalid' } }
+            )
+          }
+          return HttpResponse.json({ ok: true })
+        })
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    const req = client.GET('/v1/{organization}/organization/', {
+      params: { path: { organization: 'test-org-id' } },
+    })
+
+    await vi.runAllTimersAsync()
+    await expect(req).resolves.toBeTruthy()
+    expect(calls).toBe(2)
+    expect(setTimeoutSpy).toHaveBeenCalled()
+  })
+
+  test('POST 429 with invalid Retry-After: no retry; throws RateLimitError', async () => {
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    server.use(
+      ...withMockAuth(
+        http.post('https://api.example.com/v1/test-org-id/retry-target', () => {
+          return HttpResponse.json(
+            { error: 'rl' },
+            { status: 429, headers: { 'Retry-After': 'invalid' } }
+          )
+        })
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    await expect((client as any).POST('/v1/test-org-id/retry-target', {})).rejects.toThrow(
+      RateLimitError
+    )
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
+  })
+
+  test('No retry when method not configured (PUT 500)', async () => {
+    let calls = 0
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    server.use(
+      ...withMockAuth(
+        http.put('https://api.example.com/v1/test-org-id/organization/', () => {
+          calls += 1
+          return HttpResponse.json(null, { status: 500 })
+        })
+      )
+    )
+
+    const client = createAmigoFetch(mockConfig)
+    await expect((client as any).PUT('/v1/test-org-id/organization/', {})).rejects.toThrow()
+    expect(calls).toBe(1)
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
+  })
+
+  test('AbortError rejection is not retried', async () => {
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    const mockFetch = vi.fn().mockImplementation((request: Request) => {
+      const url = request.url
+      return Promise.reject(new DOMException('aborted', 'AbortError'))
+    })
+
+    // Ensure auth uses MSW success since auth.fetch uses global fetch, not the custom one
+    server.use(mockSuccessfulAuth())
+
+    const client = createAmigoFetch(mockConfig, mockFetch as unknown as typeof fetch)
+    await expect(
+      client.GET('/v1/{organization}/organization/', {
+        params: { path: { organization: 'test-org-id' } },
+      })
+    ).rejects.toThrow(/abort/i)
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
+  })
+
+  test('Retry-After numeric clamp to maxDelayMs', async () => {
+    let calls = 0
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    server.use(
+      ...withMockAuth(
+        http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+          calls += 1
+          if (calls === 1) {
+            return HttpResponse.json(
+              { error: 'rl' },
+              { status: 429, headers: { 'Retry-After': '10' } }
+            )
+          }
+          return HttpResponse.json({ ok: true })
+        })
+      )
+    )
+
+    const client = createAmigoFetch({ ...mockConfig, retry: { maxDelayMs: 1000 } } as any)
+    const req = client.GET('/v1/{organization}/organization/', {
+      params: { path: { organization: 'test-org-id' } },
+    })
+
+    await vi.runAllTimersAsync()
+    await expect(req).resolves.toBeTruthy()
+    const delay = (setTimeoutSpy.mock.calls[0]?.[1] as number) ?? 0
+    expect(Math.round(delay)).toBe(1000)
+  })
 
   test.skip('401 refresh (optional): first 401 then 200; exactly one refresh then success', async () => {
-    // TODO: implement with fake timers and MSW
+    // NOTE: Current auth middleware clears token on 401 to force refresh on a subsequent call,
+    // but it does not automatically replay the same request. Implementing this would
+    // require adding an immediate re-issue-on-401 behavior.
+  })
+
+  test('401 flow: first 401 clears token; next call refreshes once and succeeds', async () => {
+    let orgCalls = 0
+    let authCalls = 0
+
+    server.use(
+      // Count auth calls
+      http.post('https://api.example.com/v1/test-org-id/user/signin_with_api_key', () => {
+        authCalls += 1
+        return HttpResponse.json({
+          id_token: 'mock-token',
+          expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        })
+      }),
+      // First org GET -> 401, second -> 200
+      http.get('https://api.example.com/v1/test-org-id/organization/', () => {
+        orgCalls += 1
+        if (orgCalls === 1) {
+          return HttpResponse.json(null, { status: 401, statusText: 'Unauthorized' })
+        }
+        return HttpResponse.json({ ok: true })
+      })
+    )
+
+    const client = createAmigoFetch(mockConfig)
+
+    // First call fails with 401 (AuthenticationError via middleware)
+    await expect(
+      client.GET('/v1/{organization}/organization/', {
+        params: { path: { organization: 'test-org-id' } },
+      })
+    ).rejects.toThrow()
+
+    // Second call should succeed and auth should have been called twice in total (initial + refresh)
+    await expect(
+      client.GET('/v1/{organization}/organization/', {
+        params: { path: { organization: 'test-org-id' } },
+      })
+    ).resolves.toBeTruthy()
+
+    expect(orgCalls).toBe(2)
+    expect(authCalls).toBe(2)
   })
 })
