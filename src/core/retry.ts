@@ -19,8 +19,8 @@ export function resolveRetryOptions(options?: RetryOptions): Required<RetryOptio
     maxAttempts: options?.maxAttempts ?? 3,
     backoffBaseMs: options?.backoffBaseMs ?? 250,
     maxDelayMs: options?.maxDelayMs ?? 30_000,
-    retryOnStatus: options?.retryOnStatus ?? DEFAULT_RETRYABLE_STATUS,
-    retryOnMethods: options?.retryOnMethods ?? DEFAULT_RETRYABLE_METHODS,
+    retryOnStatus: new Set(options?.retryOnStatus ?? DEFAULT_RETRYABLE_STATUS),
+    retryOnMethods: new Set(options?.retryOnMethods ?? DEFAULT_RETRYABLE_METHODS),
   }
 }
 
@@ -32,12 +32,12 @@ function parseRetryAfterMs(headerValue: string | null, maxDelayMs: number): numb
   if (!headerValue) return null
   const seconds = Number(headerValue)
   if (Number.isFinite(seconds)) {
-    return clamp(Math.max(0, seconds * 1000), 0, maxDelayMs)
+    return clamp(seconds * 1000, 0, maxDelayMs)
   }
   const date = new Date(headerValue)
   const ms = date.getTime() - Date.now()
   if (Number.isFinite(ms)) {
-    return clamp(Math.max(0, ms), 0, maxDelayMs)
+    return clamp(ms, 0, maxDelayMs)
   }
   return null
 }
@@ -52,41 +52,37 @@ function computeBackoffWithJitterMs(
 }
 
 function isAbortError(err: unknown): boolean {
-  return (
-    (typeof DOMException !== 'undefined' &&
-      err instanceof DOMException &&
-      err.name === 'AbortError') ||
-    (typeof err === 'object' &&
-      err !== null &&
-      'name' in err &&
-      (err as { name?: unknown }).name === 'AbortError')
-  )
+  return typeof err === 'object' && err !== null && 'name' in err && err['name'] === 'AbortError'
 }
 
-function isTransportRejection(err: unknown): boolean {
-  // Fetch rejections are network-layer failures or aborts; we exclude aborts
-  return !!err && !isAbortError(err)
+function isNetworkError(err: unknown): boolean {
+  // Undici & browsers use TypeError for network failures
+  return err instanceof TypeError && !isAbortError(err)
 }
 
 async function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
-  if (ms <= 0) return
+  if (ms <= 0) {
+    signal?.throwIfAborted?.()
+    return
+  }
   await new Promise<void>((resolve, reject) => {
+    const rejectWith =
+      signal?.reason instanceof Error ? signal.reason : (signal?.reason ?? new Error('AbortError'))
+
     if (signal?.aborted) {
-      reject(new DOMException('Aborted', 'AbortError'))
+      reject(rejectWith)
       return
     }
-    const timer = setTimeout(() => {
-      cleanup()
+    const t = setTimeout(() => {
+      off()
       resolve()
     }, ms)
     const onAbort = () => {
-      cleanup()
-      reject(new DOMException('Aborted', 'AbortError'))
+      off()
+      clearTimeout(t)
+      reject(rejectWith)
     }
-    const cleanup = () => {
-      clearTimeout(timer)
-      signal?.removeEventListener('abort', onAbort)
-    }
+    const off = () => signal?.removeEventListener('abort', onAbort)
     signal?.addEventListener('abort', onAbort, { once: true })
   })
 }
@@ -127,7 +123,7 @@ export function createRetryingFetch(
       let shouldRetry = false
       let delayMs: number | null = null
 
-      if (isTransportRejection(error)) {
+      if (isNetworkError(error)) {
         shouldRetry = isMethodRetryableByDefault
         if (shouldRetry) {
           delayMs = computeBackoffWithJitterMs(

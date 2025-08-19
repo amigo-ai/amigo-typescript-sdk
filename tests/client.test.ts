@@ -578,12 +578,6 @@ describe('Retry logic', () => {
     expect(Math.round(delay)).toBe(1000)
   })
 
-  test.skip('401 refresh (optional): first 401 then 200; exactly one refresh then success', async () => {
-    // NOTE: Current auth middleware clears token on 401 to force refresh on a subsequent call,
-    // but it does not automatically replay the same request. Implementing this would
-    // require adding an immediate re-issue-on-401 behavior.
-  })
-
   test('401 flow: first 401 clears token; next call refreshes once and succeeds', async () => {
     let orgCalls = 0
     let authCalls = 0
