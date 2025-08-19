@@ -4,6 +4,7 @@ import { OrganizationResource } from './resources/organization'
 import { ConversationResource } from './resources/conversation'
 import { ServiceResource } from './resources/services'
 import { UserResource } from './resources/user'
+import type { RetryOptions } from './core/retry'
 
 export interface AmigoSdkConfig {
   /** API key from Amigo dashboard */
@@ -16,6 +17,8 @@ export interface AmigoSdkConfig {
   orgId: string
   /** Base URL of the Amigo API */
   baseUrl?: string
+  /** Retry configuration for HTTP requests */
+  retry?: RetryOptions
 }
 
 const defaultBaseUrl = 'https://api.amigo.ai'
