@@ -27,7 +27,7 @@ describe('SDK Error Tests', () => {
       const response = new Response(null, { status, statusText })
       const error = createApiError(response)
       expect(error).toBeInstanceOf(expectedType)
-      expect(error.message).toBe(statusText)
+      expect(error.message).toContain(statusText)
     })
 
     // Test with JSON body

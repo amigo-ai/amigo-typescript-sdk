@@ -131,11 +131,19 @@ export function createApiError(response: Response, body?: unknown): AmigoError {
     503: ServiceUnavailableError,
   }
 
+  const errorMessageKeys = ['message', 'error', 'detail']
+
   const ErrorClass = map[response.status] ?? AmigoError
-  const message =
-    body && typeof body === 'object' && 'message' in body
-      ? String((body as Record<string, unknown>).message)
-      : response.statusText
+  let message = `HTTP ${response.status} ${response.statusText}`
+
+  if (body && typeof body === 'object') {
+    for (const key of errorMessageKeys) {
+      if (key in body) {
+        message = String((body as Record<string, unknown>)[key])
+        break
+      }
+    }
+  }
 
   const options = {
     status: response.status,
