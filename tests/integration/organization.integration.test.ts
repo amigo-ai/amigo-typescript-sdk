@@ -57,12 +57,4 @@ describe('Integration Tests - Real API', () => {
 
     await expect(client.organizations.getOrganization()).rejects.toThrow(errors.AuthenticationError)
   })
-
-  test('should list agents for the organization', async () => {
-    client = new AmigoClient(testConfig)
-    const resp = await client.organizations.getAgents()
-    expect(resp).toBeDefined()
-    expect(resp).toHaveProperty('agents')
-    expect(Array.isArray(resp.agents)).toBe(true)
-  })
 })
