@@ -26,7 +26,10 @@ export class ConversationResource {
     const resp = await this.c.POST('/v1/{organization}/conversation/', {
       params: { path: { organization: this.orgId }, query: queryParams },
       body,
-      headers,
+      headers: {
+        Accept: 'application/x-ndjson',
+        ...(headers ?? {}),
+      } as operations['create-conversation']['parameters']['header'],
       // Ensure we receive a stream for NDJSON
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),
@@ -83,7 +86,10 @@ export class ConversationResource {
         query: normalizedQuery as unknown as InteractQuery,
       },
       body: bodyToSend,
-      headers,
+      headers: {
+        Accept: 'application/x-ndjson',
+        ...(headers ?? {}),
+      } as operations['interact-with-conversation']['parameters']['header'],
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),
     })
