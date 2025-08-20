@@ -61,7 +61,6 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     const events = await client.conversations.createConversation(
       {
         service_id: serviceId,
-        service_version_set_name: 'release',
       },
       { response_format: 'text' }
     )

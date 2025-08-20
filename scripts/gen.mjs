@@ -7,7 +7,7 @@ const outTypesFile = 'src/generated/api-types.ts'
 
 /* -------- TypeScript types -------- */
 await mkdir(dirname(outTypesFile), { recursive: true })
-const ast = await openapiTS(schemaUrl)
+const ast = await openapiTS(schemaUrl, { defaultNonNullable: false })
 
 // Convert AST to string and apply targeted overrides
 let code = astToString(ast)
