@@ -87,11 +87,7 @@ async function run(): Promise<void> {
     console.log('Done.')
   } catch (err) {
     if (err instanceof errors.AmigoError) {
-      console.error(`AmigoError (${err.name})`, {
-        message: err.message,
-        statusCode: err.statusCode,
-        context: err.context,
-      })
+      console.error(err)
     } else {
       console.error('Unexpected error:', err)
     }
