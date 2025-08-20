@@ -5,7 +5,7 @@
 // Environment variables are loaded from .env via dotenv (see examples/.env.example).
 
 import 'dotenv/config'
-import { AmigoClient, errors, type AmigoSdkConfig } from '@amigo-ai/sdk'
+import { AmigoClient, errors, type AmigoSdkConfig, components } from '@amigo-ai/sdk'
 
 async function run(): Promise<void> {
   const config: AmigoSdkConfig = {
@@ -32,7 +32,14 @@ async function run(): Promise<void> {
       { response_format: 'text' }
     )
 
-    const { conversationId } = await logEvents('create', createEvents)
+    let conversationId: string | undefined
+    const logCreate = makeEventLogger('create')
+    for await (const evt of createEvents) {
+      logCreate(evt)
+      if (evt.type === 'conversation-created') {
+        conversationId = evt.conversation_id
+      }
+    }
 
     if (!conversationId) {
       throw new Error('Conversation was not created (no id received).')
@@ -46,7 +53,13 @@ async function run(): Promise<void> {
       { request_format: 'text', response_format: 'text' }
     )
 
-    await logEvents('interact', interactionEvents)
+    const logInteract = makeEventLogger('interact')
+    for await (const evt of interactionEvents) {
+      logInteract(evt)
+      if (evt.type === 'interaction-complete') {
+        break
+      }
+    }
 
     // 3) Get messages for the conversation and log them
     console.log('Fetching recent messages...')
@@ -86,36 +99,26 @@ async function run(): Promise<void> {
   }
 }
 
-async function logEvents<T extends { type: string }>(
-  label: string,
-  events: AsyncGenerator<T>
-): Promise<{ conversationId?: string }> {
+type StreamEvent =
+  | components['schemas']['conversation__create_conversation__Response']
+  | components['schemas']['conversation__interact_with_conversation__Response']
+
+function makeEventLogger(label: string) {
   let newMessageCount = 0
   let printedEllipsis = false
-  let conversationId: string | undefined
-
-  for await (const evt of events) {
-    if (evt.type === 'new-message') {
+  return (event: StreamEvent) => {
+    if (event.type === 'new-message') {
       if (newMessageCount < 3) {
         newMessageCount++
-        console.log(`[${label} event]`, evt)
+        console.log(`[${label} event]`, event)
       } else if (!printedEllipsis) {
         printedEllipsis = true
         console.log(`[${label} event] ... (more new-message events)`)
       }
-    } else {
-      console.log(`[${label} event]`, evt)
+      return
     }
-
-    if (evt.type === 'conversation-created') {
-      conversationId = (evt as unknown as { conversation_id: string }).conversation_id
-    }
-    if (evt.type === 'interaction-complete') {
-      break
-    }
+    console.log(`[${label} event]`, event)
   }
-
-  return { conversationId }
 }
 
 await run()
