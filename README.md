@@ -12,13 +12,13 @@ The official TypeScript SDK for the Amigo API, providing a simple and intuitive 
 Install the SDK using npm:
 
 ```bash
-npm install @amigo/amigo-typescript-sdk
+npm install @amigo-ai/sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { AmigoClient } from '@amigo/amigo-typescript-sdk'
+import { AmigoClient } from '@amigo-ai/sdk'
 
 // Initialize the client
 const client = new AmigoClient({
@@ -28,11 +28,14 @@ const client = new AmigoClient({
   orgId: 'your-organization-id',
 })
 
-// Get organization details
+// List recent conversations
 async function example() {
   try {
-    const organization = await client.organizations.getOrganization('your-org-id')
-    console.log('Organization:', organization)
+    const conversations = await client.conversations.getConversations({
+      limit: 10,
+      sort_by: ['-created_at'],
+    })
+    console.log('Conversations:', conversations)
   } catch (error) {
     console.error('Error:', error)
   }
@@ -63,14 +66,14 @@ For detailed instructions on generating API keys, see the [Authentication Guide]
 
 ### API compatibility
 
-This SDK autogenerates its types from the latest Amigo OpenAPI schema. As a result, only the latest published SDK version is guaranteed to match the current API. If you pin to an older version, it may not include the newest endpoints or fields.
+This SDK auto-generates its types from the latest Amigo OpenAPI schema. As a result, only the latest published SDK version is guaranteed to match the current API. If you pin to an older version, it may not include the newest endpoints or fields.
 
 ## Error Handling
 
 The SDK provides typed error handling:
 
 ```typescript
-import { AmigoClient, errors } from '@amigo/amigo-typescript-sdk'
+import { AmigoClient, errors } from '@amigo-ai/sdk'
 
 try {
   const result = await client.organizations.getOrganization('org-id')

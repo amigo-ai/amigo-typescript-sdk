@@ -26,7 +26,7 @@ async function run(): Promise<void> {
 
   try {
     // 1) Create a conversation and log streamed events
-    console.log('Creating conversation...')
+    console.log('\nCreating conversation...')
     const createEvents = await client.conversations.createConversation(
       { service_id: serviceId, service_version_set_name: 'release' },
       { response_format: 'text' }
@@ -45,8 +45,13 @@ async function run(): Promise<void> {
       throw new Error('Conversation was not created (no id received).')
     }
 
-    // 2) Interact with the conversation via text (high-level helper) and log streamed events
-    console.log('Sending a text message to the conversation...')
+    // 2) Get the conversation by id and print it
+    console.log('\nFetching conversation by id...')
+    const listById = await client.conversations.getConversations({ id: [conversationId] })
+    console.log(listById)
+
+    // 3) Interact with the conversation via text (high-level helper) and log streamed events
+    console.log('\nSending a text message to the conversation...')
     const interactionEvents = await client.conversations.interactWithConversation(
       conversationId,
       'Hello from the Amigo TypeScript SDK example!',
@@ -61,8 +66,8 @@ async function run(): Promise<void> {
       }
     }
 
-    // 3) Get messages for the conversation and log them
-    console.log('Fetching recent messages...')
+    // 4) Get messages for the conversation and log them
+    console.log('\nFetching recent messages...')
     const messagesPage = await client.conversations.getConversationMessages(conversationId, {
       limit: 10,
       sort_by: ['+created_at'],
@@ -71,8 +76,8 @@ async function run(): Promise<void> {
       console.log('[message]', m)
     }
 
-    // 4) Finish the conversation
-    console.log('Finishing conversation...')
+    // 5) Finish the conversation
+    console.log('\nFinishing conversation...')
     try {
       await client.conversations.finishConversation(conversationId)
       console.log('Conversation finished.')

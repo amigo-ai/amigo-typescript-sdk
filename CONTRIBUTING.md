@@ -20,10 +20,10 @@ The following npm scripts are available for development:
   - Generates OpenAPI types (`scripts/gen.mjs`)
   - Builds the project with esbuild (`scripts/build.mjs`)
   - Compiles TypeScript declarations (`tsc --project tsconfig.build.json`)
-
 - **`npm run dev`** - Development build with watch mode:
   - Generates OpenAPI types
   - Builds with esbuild in watch mode for automatic rebuilds
+- **`npm run pack:local`** - Builds the SDK and creates a tarball in `artifacts/` for local installation.
 
 ### Code Generation
 
@@ -33,13 +33,14 @@ The following npm scripts are available for development:
 
 ### Testing Scripts
 
-- **`npm test`** - Runs all tests once using Vitest
-- **`npm run test:watch`** - Runs tests in watch mode for development
-- **`npm run test:coverage`** - Runs tests and generates coverage report
+- **`npm run test`** - Runs all **unit** tests using Vitest
+- **`npm run test:coverage`** - Runs all **unit** tests using Vitest and generates coverage report
+- **`npm run test:integration`** - Runs all **integration** tests using Vitest
 
 ### Code Quality Scripts
 
 - **`npm run lint`** - Lints TypeScript files with ESLint (zero warnings policy)
+- **`npm run lint:fix`**: Automatically fixes ESLint issues in `src`.
 - **`npm run format`** - Checks code formatting with Prettier
 - **`npm run format:write`** - Automatically formats code with Prettier
 
@@ -59,7 +60,10 @@ This project uses **Vitest** as the testing framework. Test files should follow 
 
 ```bash
 # Run all tests once
-npm test
+npm run test
+
+# Run integration tests which hit live API endpoints
+npm run test:integration
 
 # Run tests in watch mode during development
 npm run test:watch
@@ -71,6 +75,7 @@ npm run test:coverage
 ### Writing Tests
 
 - Place test files in the `tests/` directory
+- Place integration test files in the `tests/integration` directory
 - Test helpers are available in `tests/test-helpers.ts`
 - The project uses MSW (Mock Service Worker) for API mocking
 
@@ -131,6 +136,7 @@ src/
 └── index.ts        # Main entry point
 
 tests/
+├── integration/    # Integration tests
 ├── resources/      # Tests for resource modules
 └── *.test.ts       # Core functionality tests
 ```
