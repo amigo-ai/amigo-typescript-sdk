@@ -32,6 +32,16 @@ jobs:
       - name: Fetch current production spec
         run: curl -fSL -o openapi-new.json "${{ steps.spec.outputs.spec_url }}"
 
+      - name: Check baseline presence
+        id: baseline
+        run: |
+          mkdir -p specs
+          if [ ! -f specs/openapi-baseline.json ]; then
+            echo "missing=true" >> $GITHUB_OUTPUT
+          else
+            echo "missing=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Prepare baseline
         run: |
           mkdir -p specs
@@ -42,6 +52,10 @@ jobs:
       - name: Compare normalized specs
         id: diff
         run: |
+          if [ "${{ steps.baseline.outputs.missing }}" = "true" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           jq -S 'del(.info.version) | del(.servers)' specs/openapi-baseline.json > baseline.norm.json
           jq -S 'del(.info.version) | del(.servers)' openapi-new.json > new.norm.json
           if diff -q baseline.norm.json new.norm.json >/dev/null 2>&1; then

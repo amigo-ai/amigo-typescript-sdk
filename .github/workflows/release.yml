@@ -86,14 +86,17 @@ jobs:
           node scripts/gen.mjs
           echo "✅ Models generated successfully"
 
-      - name: Resolve spec URL
-        id: spec
+      - name: Fetch OpenAPI spec
+        id: fetch_spec
         run: |
           SPEC_URL="${{ inputs.spec_url }}"
           if [ -z "$SPEC_URL" ]; then
             SPEC_URL="https://api.amigo.ai/v1/openapi.json"
           fi
           echo "spec_url=$SPEC_URL" >> $GITHUB_OUTPUT
+          curl -fSL -o openapi-new.json "$SPEC_URL"
+          mkdir -p specs
+          cp openapi-new.json specs/openapi-baseline.json
 
       - name: Increment version
         id: new_version
@@ -143,18 +146,10 @@ jobs:
           npm publish "$FILE" $PROV_FLAG $ACCESS_FLAG
           echo "✅ Package published to npm"
 
-      - name: Update OpenAPI baseline
-        if: ${{ !inputs.dry_run }}
-        run: |
-          echo "🔄 Updating OpenAPI baseline from ${{ steps.spec.outputs.spec_url }}"
-          mkdir -p specs
-          curl -fSL -o specs/openapi-baseline.json "${{ steps.spec.outputs.spec_url }}"
-          echo "✅ Baseline updated at specs/openapi-baseline.json"
-
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
-          git add package.json package-lock.json src/generated specs/openapi-baseline.json || true
+          git add -A
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
 
