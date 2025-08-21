@@ -1,0 +1,17 @@
+name: Auto Release (Backend API changes)
+
+on:
+  repository_dispatch:
+    types: [openapi-updated]
+
+permissions:
+  contents: write
+
+jobs:
+  release-on-dispatch:
+    name: Trigger SDK release (minor)
+    uses: ./.github/workflows/release.yml
+    with:
+      version_type: minor
+      dry_run: ${{ github.event.client_payload.dry_run == true }}
+    secrets: inherit

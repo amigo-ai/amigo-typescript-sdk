@@ -18,6 +18,19 @@ on:
         default: false
         type: boolean
 
+  workflow_call:
+    inputs:
+      version_type:
+        description: 'Version increment type (patch|minor|major)'
+        required: true
+        type: string
+        default: 'patch'
+      dry_run:
+        description: 'Dry run (skip upload)'
+        required: false
+        type: boolean
+        default: false
+
 permissions:
   contents: write
   id-token: write
