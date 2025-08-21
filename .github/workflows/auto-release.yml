@@ -70,6 +70,48 @@ jobs:
             fi
           fi
 
+          # Section-level hashes and key diffs
+          echo "\n== Section-level hashes =="
+          if [ -f specs/openapi-baseline.json ]; then
+            BASELINE_PATHS_SHA=$(jq -cS '(.paths // {})' specs/openapi-baseline.json | sha256sum | awk '{print $1}')
+            BASELINE_SCHEMAS_SHA=$(jq -cS '(.components.schemas // {})' specs/openapi-baseline.json | sha256sum | awk '{print $1}')
+            BASELINE_PATHS_COUNT=$(jq -r '(.paths // {}) | keys | length' specs/openapi-baseline.json)
+            BASELINE_SCHEMAS_COUNT=$(jq -r '(.components.schemas // {}) | keys | length' specs/openapi-baseline.json)
+          else
+            BASELINE_PATHS_SHA=(none)
+            BASELINE_SCHEMAS_SHA=(none)
+            BASELINE_PATHS_COUNT=0
+            BASELINE_SCHEMAS_COUNT=0
+          fi
+          NEW_PATHS_SHA=$(jq -cS '(.paths // {})' openapi-new.json | sha256sum | awk '{print $1}')
+          NEW_SCHEMAS_SHA=$(jq -cS '(.components.schemas // {})' openapi-new.json | sha256sum | awk '{print $1}')
+          NEW_PATHS_COUNT=$(jq -r '(.paths // {}) | keys | length' openapi-new.json)
+          NEW_SCHEMAS_COUNT=$(jq -r '(.components.schemas // {}) | keys | length' openapi-new.json)
+          echo "BASELINE paths: count=$BASELINE_PATHS_COUNT sha=$BASELINE_PATHS_SHA"
+          echo "NEW      paths: count=$NEW_PATHS_COUNT sha=$NEW_PATHS_SHA"
+          echo "BASELINE schemas: count=$BASELINE_SCHEMAS_COUNT sha=$BASELINE_SCHEMAS_SHA"
+          echo "NEW      schemas: count=$NEW_SCHEMAS_COUNT sha=$NEW_SCHEMAS_SHA"
+
+          echo "\n== Key diffs (paths) =="
+          if [ -f specs/openapi-baseline.json ]; then
+            jq -r '(.paths // {}) | keys | sort[]' specs/openapi-baseline.json > baseline.paths.txt || true
+          else
+            : > baseline.paths.txt
+          fi
+          jq -r '(.paths // {}) | keys | sort[]' openapi-new.json > new.paths.txt
+          echo "Removed paths (in baseline, not in new):"; comm -23 baseline.paths.txt new.paths.txt || true
+          echo "Added paths (in new, not in baseline):"; comm -13 baseline.paths.txt new.paths.txt || true
+
+          echo "\n== Key diffs (components.schemas) =="
+          if [ -f specs/openapi-baseline.json ]; then
+            jq -r '(.components.schemas // {}) | keys | sort[]' specs/openapi-baseline.json > baseline.schemas.txt || true
+          else
+            : > baseline.schemas.txt
+          fi
+          jq -r '(.components.schemas // {}) | keys | sort[]' openapi-new.json > new.schemas.txt
+          echo "Removed schemas (in baseline, not in new):"; comm -23 baseline.schemas.txt new.schemas.txt || true
+          echo "Added schemas (in new, not in baseline):"; comm -13 baseline.schemas.txt new.schemas.txt || true
+
       - name: Compare normalized specs
         id: diff
         run: |
