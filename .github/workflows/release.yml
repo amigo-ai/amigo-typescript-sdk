@@ -3,13 +3,17 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
+      version_type:
+        description: 'Version increment type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
       dry_run:
         description: 'Dry run (skip publish, commits, tags)'
-        required: false
-        default: false
-        type: boolean
-      production:
-        description: 'Publish to npm (instead of skipping)'
         required: false
         default: false
         type: boolean
@@ -66,17 +70,17 @@ jobs:
           node scripts/gen.mjs
           echo "✅ Models generated successfully"
 
-      - name: Increment version (alpha prerelease)
+      - name: Increment version
         id: new_version
         run: |
-          echo "🔄 Incrementing pre-release (alpha)..."
+          echo "🔄 Incrementing ${{ inputs.version_type }} version..."
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            NEW_VERSION=$(npm version prerelease --preid alpha --no-git-tag-version --dry-run)
+            NEW_VERSION=$(npm version ${{ inputs.version_type }} --no-git-tag-version --dry-run)
             NEW_VERSION=${NEW_VERSION#v}
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "✅ (dry-run) Version would be: ${{ steps.current_version.outputs.version }} → $NEW_VERSION"
           else
-            npm version prerelease --preid alpha --no-git-tag-version
+            npm version ${{ inputs.version_type }} --no-git-tag-version
             NEW_VERSION=$(node -p "require('./package.json').version")
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "✅ Version updated: ${{ steps.current_version.outputs.version }} → $NEW_VERSION"
@@ -99,39 +103,20 @@ jobs:
           echo "✅ Tarball created: $FILE"
           ls -la "$FILE"
 
-      - name: Publish to npm under alpha tag
-        if: ${{ !inputs.dry_run && inputs.production }}
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "🔄 Publishing to npm with tag 'alpha'..."
+          echo "🔄 Publishing to npm..."
           FILE="${{ steps.pack.outputs.file }}"
           ACCESS_FLAG="--access public"
           PROV_FLAG=""
           if [ "${{ github.repository_visibility }}" = "public" ]; then
             PROV_FLAG="--provenance"
           fi
-          npm publish "$FILE" --tag alpha $PROV_FLAG $ACCESS_FLAG
-          echo "✅ Package published to npm (alpha)"
-
-      - name: Point npm latest tag to current alpha
-        if: ${{ !inputs.dry_run && inputs.production }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          VERSION="${{ steps.new_version.outputs.version }}"
-          echo "🔄 Updating npm dist-tag: latest → $VERSION"
-          ATTEMPTS=0
-          until npm dist-tag add @amigo-ai/sdk@"$VERSION" latest; do
-            ATTEMPTS=$((ATTEMPTS+1))
-            if [ $ATTEMPTS -ge 5 ]; then
-              echo "⚠️  Failed to update npm dist-tag after $ATTEMPTS attempts; continuing without failing the release."
-              break
-            fi
-            echo "⏳ Tag update not yet available; retrying in 3s (attempt $ATTEMPTS/5)..."
-            sleep 3
-          done
-          echo "✅ npm dist-tag set (or already current): latest → $VERSION"
+          npm publish "$FILE" $PROV_FLAG $ACCESS_FLAG
+          echo "✅ Package published to npm"
 
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
@@ -159,12 +144,10 @@ jobs:
 
             ### Package Information
             - Version: ${{ steps.new_version.outputs.version }}
-            - Channel: alpha (npm dist-tag)
 
             ### Installation
-            npm install @amigo-ai/sdk@alpha
+            npm install @amigo-ai/sdk
           draft: false
-          prerelease: true
           files: |
             ${{ steps.pack.outputs.file }}
 
@@ -184,6 +167,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Version: ${{ steps.new_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- Previous: ${{ steps.current_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Channel: alpha (npm dist-tag)" >> $GITHUB_STEP_SUMMARY
           echo "- Dry Run: ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Published: ${{ inputs.production && 'npm (alpha tag)' || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Published: ${{ inputs.dry_run && 'skipped' || 'npm' }}" >> $GITHUB_STEP_SUMMARY
