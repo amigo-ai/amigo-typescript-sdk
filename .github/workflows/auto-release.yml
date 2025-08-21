@@ -54,8 +54,24 @@ jobs:
           echo "Resolved spec_url: ${{ steps.spec.outputs.spec_url }}"
           echo "Baseline missing: ${{ steps.baseline.outputs.missing }}"
           echo "jq version: $(jq --version)"
-          jq -S 'del(.info.version) | del(.servers)' specs/openapi-baseline.json > baseline.norm.json || true
-          jq -S 'del(.info.version) | del(.servers)' openapi-new.json > new.norm.json
+          jq -S '
+            def sort_deep:
+              if type == "array" then
+                map(sort_deep) | sort_by(tostring)
+              elif type == "object" then
+                with_entries(.value |= sort_deep)
+              else . end;
+            (del(.info) | del(.servers)) | sort_deep
+          ' specs/openapi-baseline.json > baseline.norm.json || true
+          jq -S '
+            def sort_deep:
+              if type == "array" then
+                map(sort_deep) | sort_by(tostring)
+              elif type == "object" then
+                with_entries(.value |= sort_deep)
+              else . end;
+            (del(.info) | del(.servers)) | sort_deep
+          ' openapi-new.json > new.norm.json
           if [ -f baseline.norm.json ]; then
             echo "BASELINE_NORM_SHA=$(sha256sum baseline.norm.json | awk '{print $1}')"
           else
@@ -119,8 +135,24 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          jq -S 'del(.info.version) | del(.servers)' specs/openapi-baseline.json > baseline.norm.json
-          jq -S 'del(.info.version) | del(.servers)' openapi-new.json > new.norm.json
+          jq -S '
+            def sort_deep:
+              if type == "array" then
+                map(sort_deep) | sort_by(tostring)
+              elif type == "object" then
+                with_entries(.value |= sort_deep)
+              else . end;
+            (del(.info) | del(.servers)) | sort_deep
+          ' specs/openapi-baseline.json > baseline.norm.json
+          jq -S '
+            def sort_deep:
+              if type == "array" then
+                map(sort_deep) | sort_by(tostring)
+              elif type == "object" then
+                with_entries(.value |= sort_deep)
+              else . end;
+            (del(.info) | del(.servers)) | sort_deep
+          ' openapi-new.json > new.norm.json
           if diff -q baseline.norm.json new.norm.json >/dev/null 2>&1; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
