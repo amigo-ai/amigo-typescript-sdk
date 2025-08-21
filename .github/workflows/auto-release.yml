@@ -49,6 +49,27 @@ jobs:
             cp openapi-new.json specs/openapi-baseline.json
           fi
 
+      - name: Diagnostics (spec and baseline)
+        run: |
+          echo "Resolved spec_url: ${{ steps.spec.outputs.spec_url }}"
+          echo "Baseline missing: ${{ steps.baseline.outputs.missing }}"
+          echo "jq version: $(jq --version)"
+          jq -S 'del(.info.version) | del(.servers)' specs/openapi-baseline.json > baseline.norm.json || true
+          jq -S 'del(.info.version) | del(.servers)' openapi-new.json > new.norm.json
+          if [ -f baseline.norm.json ]; then
+            echo "BASELINE_NORM_SHA=$(sha256sum baseline.norm.json | awk '{print $1}')"
+          else
+            echo "BASELINE_NORM_SHA=(none)"
+          fi
+          echo "NEW_NORM_SHA=$(sha256sum new.norm.json | awk '{print $1}')"
+          if [ -f baseline.norm.json ]; then
+            if diff -q baseline.norm.json new.norm.json >/dev/null 2>&1; then
+              echo "Quick diff: identical"
+            else
+              echo "Quick diff: differs"
+            fi
+          fi
+
       - name: Compare normalized specs
         id: diff
         run: |
@@ -63,6 +84,16 @@ jobs:
           else
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Upload normalized specs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: normalized-specs
+          path: |
+            baseline.norm.json
+            new.norm.json
+          retention-days: 7
 
   release-on-dispatch:
     name: Trigger SDK release (minor)
