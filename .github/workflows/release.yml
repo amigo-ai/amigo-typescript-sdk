@@ -33,8 +33,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
-  packages: write
 
 jobs:
   # Reuse the existing test workflow
@@ -125,7 +123,7 @@ jobs:
           FILE="${{ steps.pack.outputs.file }}"
           ACCESS_FLAG="--access public"
           PROV_FLAG=""
-          if [ "${{ github.repository_visibility }}" = "public" ]; then
+          if [ "${{ github.repository_visibility }}" = "public" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" ]; then
             PROV_FLAG="--provenance"
           fi
           npm publish "$FILE" $PROV_FLAG $ACCESS_FLAG
