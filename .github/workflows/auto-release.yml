@@ -8,10 +8,55 @@ permissions:
   contents: write
 
 jobs:
+  detect:
+    name: Detect OpenAPI change
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+      spec_url: ${{ steps.spec.outputs.spec_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Resolve spec URL
+        id: spec
+        run: |
+          SPEC_URL="${{ github.event.client_payload.spec_url }}"
+          if [ -z "$SPEC_URL" ]; then
+            SPEC_URL="https://api.amigo.ai/v1/openapi.json"
+          fi
+          echo "spec_url=$SPEC_URL" >> $GITHUB_OUTPUT
+
+      - name: Fetch current production spec
+        run: curl -fSL -o openapi-new.json "${{ steps.spec.outputs.spec_url }}"
+
+      - name: Prepare baseline
+        run: |
+          mkdir -p specs
+          if [ ! -f specs/openapi-baseline.json ]; then
+            cp openapi-new.json specs/openapi-baseline.json
+          fi
+
+      - name: Compare normalized specs
+        id: diff
+        run: |
+          jq -S 'del(.info.version) | del(.servers)' specs/openapi-baseline.json > baseline.norm.json
+          jq -S 'del(.info.version) | del(.servers)' openapi-new.json > new.norm.json
+          if diff -q baseline.norm.json new.norm.json >/dev/null 2>&1; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
   release-on-dispatch:
     name: Trigger SDK release (minor)
+    needs: detect
+    if: needs.detect.outputs.changed == 'true'
     uses: ./.github/workflows/release.yml
     with:
       version_type: minor
       dry_run: ${{ github.event.client_payload.dry_run == true }}
+      spec_url: ${{ needs.detect.outputs.spec_url }}
     secrets: inherit
