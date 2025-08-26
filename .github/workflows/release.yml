@@ -156,7 +156,7 @@ jobs:
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
-          git add package.json specs/openapi-baseline.json || true
+          git add package.json package-lock.json specs/openapi-baseline.json || true
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
 
