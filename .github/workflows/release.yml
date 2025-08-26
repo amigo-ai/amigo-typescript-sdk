@@ -149,7 +149,7 @@ jobs:
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
-          git add -A
+          git add package.json specs/openapi-baseline.json || true
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
 
@@ -178,6 +178,11 @@ jobs:
           draft: false
           files: |
             ${{ steps.pack.outputs.file }}
+
+      - name: Cleanup temp files
+        if: always()
+        run: |
+          rm -f openapi-new.json || true
 
       - name: Upload build artifacts
         if: always()

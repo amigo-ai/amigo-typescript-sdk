@@ -79,3 +79,7 @@ src/generated/
 
 # Local tarballs
 artifacts/
+*.tgz
+
+# Local OpenAPI snapshots
+openapi-new.json
