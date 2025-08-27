@@ -15,8 +15,6 @@ coverage/
 #  Environment & secrets                   #
 ############################################
 .env
-.env.*
-!.env.example            # keep a template if you want
 
 ############################################
 #  Editor / IDE cruft                      #
