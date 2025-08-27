@@ -6,6 +6,7 @@
   "scripts": {
     "start:basic": "tsx conversation/basic-conversation.ts",
     "start:events": "tsx conversation/conversation-events.ts",
+    "start:user": "tsx user/user-management.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
