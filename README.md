@@ -44,6 +44,14 @@ async function example() {
 example()
 ```
 
+## Examples
+
+- **Conversation management**:
+  - [Basic conversation](examples/conversation/basic-conversation.ts)
+  - [Streaming conversation events](examples/conversation/conversation-events.ts)
+- **User management**:
+  - [User management examples](examples/user/user-management.ts)
+
 ## Configuration
 
 The SDK requires the following configuration parameters:
@@ -67,6 +75,34 @@ For detailed instructions on generating API keys, see the [Authentication Guide]
 ### API compatibility
 
 This SDK auto-generates its types from the latest Amigo OpenAPI schema. As a result, only the latest published SDK version is guaranteed to match the current API. If you pin to an older version, it may not include the newest endpoints or fields.
+
+## Generated types
+
+The SDK ships with TypeScript types generated from the latest OpenAPI schema and re-exports them for convenience.
+
+- **Importing types**:
+
+```typescript
+import type { components, operations, paths } from '@amigo-ai/sdk'
+
+// Example: response types
+type Conversation = components['schemas']['Conversation']
+
+// Example: operation params
+type GetConversationsParams = operations['getConversations']['parameters']['query']
+```
+
+## Retries
+
+The HTTP client includes sensible, configurable retries:
+
+- **Defaults**:
+  - max attempts: 3
+  - backoff base: 250ms (exponential with full jitter)
+  - max delay per attempt: 30s
+  - retry on status: {408, 429, 500, 502, 503, 504}
+  - retry on methods: {GET}
+  - special-case: POST is retried on 429 when `Retry-After` is present
 
 ## Error Handling
 

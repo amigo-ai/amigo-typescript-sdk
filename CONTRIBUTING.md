@@ -149,3 +149,60 @@ tests/
 4. Build successfully: `npm run build`
 5. Add tests for new functionality
 6. Update documentation if needed
+
+## Release Process
+
+Releases are handled via GitHub Actions. The release workflow:
+
+1. Reuses the test workflow to validate the build
+2. Regenerates OpenAPI types
+3. Bumps the version
+4. Builds and packs the package
+5. Publishes to npm (unless in dry run)
+6. Commits the version bump, creates a tag, and a GitHub Release
+
+### Required Repository Secrets
+
+Configure these secrets in your repository settings:
+
+- `NPM_TOKEN`: Token for publishing to npm
+- `CODECOV_TOKEN`: Token for Codecov uploads (used by CI test workflow)
+- `RELEASE_BOT_APP_ID`: GitHub App ID used to create tags/releases
+- `RELEASE_BOT_PRIVATE_KEY`: GitHub App private key (PEM) for the release bot
+
+### Auto-Release (OpenAPI changes)
+
+When the backend OpenAPI spec changes, the SDK can auto-release a new version.
+
+- Trigger: a `repository_dispatch` event with type `openapi-updated`
+- Detect job: fetches the provided `spec_url` (or defaults to `https://api.amigo.ai/v1/openapi.json`), normalizes and compares against `specs/openapi-baseline.json`
+- If changed: invokes the release workflow with `version_type=minor` and passes `spec_url` (supports `dry_run`)
+- Release workflow: regenerates types, bumps version, builds, publishes to npm, pushes tag, and creates a GitHub release
+
+Manual trigger example (repository_dispatch) using GitHub CLI:
+
+```bash
+# Values that mirror the workflow
+OWNER="amigo-ai"
+BACKEND_REPO="$OWNER/backend"
+COMMIT_SHA="$(git rev-parse HEAD 2>/dev/null || echo manual-test)"
+RUN_ID="$(date +%s)"  # stand-in for GitHub Actions run_id
+
+for repo in amigo-typescript-sdk amigo-python-sdk; do
+  echo "Notifying $repo..."
+  gh api "repos/$OWNER/$repo/dispatches" \
+    --method POST \
+    --header 'Accept: application/vnd.github+json' \
+    --input - <<EOF || echo "⚠️  Failed to notify $repo"
+{
+  "event_type": "openapi-updated",
+  "client_payload": {
+    "spec_url": "https://api.amigo.ai/v1/openapi.json",
+    "commit_sha": "$COMMIT_SHA",
+    "backend_repo": "$BACKEND_REPO",
+    "backend_run_id": "$RUN_ID"
+  }
+}
+EOF
+done
+```
