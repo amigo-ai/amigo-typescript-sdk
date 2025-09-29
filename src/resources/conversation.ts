@@ -51,6 +51,12 @@ export class ConversationResource {
     // Build body based on requested format, then perform a single POST
     let bodyToSend: FormData | VoiceData
 
+    // Prepare headers; we'll merge user-supplied headers and adjust per format
+    const mergedHeaders: Record<string, unknown> = {
+      Accept: 'application/x-ndjson',
+      ...(headers ?? {}),
+    }
+
     if (queryParams.request_format === 'text') {
       if (typeof input !== 'string') {
         throw new BadRequestError("textMessage is required when request_format is 'text'")
@@ -70,6 +76,24 @@ export class ConversationResource {
       throw new BadRequestError('Unsupported or missing request_format in params')
     }
 
+    // For text/FormData, do NOT set Content-Type; fetch will set multipart boundary
+    if (queryParams.request_format === 'text') {
+      delete mergedHeaders['content-type']
+      delete mergedHeaders['Content-Type']
+    }
+
+    // For voice bytes, allow caller to specify Content-Type; if absent and input is a Blob with a type, use it
+    if (queryParams.request_format === 'voice') {
+      const hasContentType =
+        mergedHeaders['content-type'] !== undefined || mergedHeaders['Content-Type'] !== undefined
+      if (!hasContentType && typeof Blob !== 'undefined' && input instanceof Blob && input.type) {
+        mergedHeaders['content-type'] = input.type
+      }
+    }
+
+    const headersToSend =
+      mergedHeaders as unknown as operations['interact-with-conversation']['parameters']['header']
+
     // Normalize nested object params that must be sent as JSON strings
     const normalizedQuery: InteractQuerySerialized = {
       ...queryParams,
@@ -84,12 +108,9 @@ export class ConversationResource {
       params: {
         path: { organization: this.orgId, conversation_id: conversationId },
         query: normalizedQuery as unknown as InteractQuery,
+        header: headersToSend,
       },
       body: bodyToSend,
-      headers: {
-        Accept: 'application/x-ndjson',
-        ...(headers ?? {}),
-      } as operations['interact-with-conversation']['parameters']['header'],
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),
     })
