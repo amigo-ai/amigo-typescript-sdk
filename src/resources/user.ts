@@ -25,7 +25,7 @@ export class UserResource {
     headers?: operations['create-invited-user']['parameters']['header']
   ) {
     return extractData(
-      this.c.POST('/v1/{organization}/user/invite', {
+      this.c.POST('/v1/{organization}/user/', {
         params: { path: { organization: this.orgId } },
         body,
         headers,

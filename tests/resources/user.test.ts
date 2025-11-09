@@ -119,7 +119,7 @@ describe('UserResource', () => {
 
       server.use(
         ...withMockAuth(
-          http.post('https://api.example.com/v1/test-org/user/invite', async ({ request }) => {
+          http.post('https://api.example.com/v1/test-org/user/', async ({ request }) => {
             const body =
               (await request.json()) as components['schemas']['user__create_invited_user__Request']
             expect(body.first_name).toBe('Ada')
@@ -153,7 +153,7 @@ describe('UserResource', () => {
     test('throws ValidationError on 422', async () => {
       server.use(
         ...withMockAuth(
-          http.post('https://api.example.com/v1/test-org/user/invite', () => {
+          http.post('https://api.example.com/v1/test-org/user/', () => {
             return HttpResponse.json(
               { detail: 'bad' },
               {
