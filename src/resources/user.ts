@@ -50,7 +50,7 @@ export class UserResource {
   ) {
     // UPDATE endpoint returns no content (e.g., 204 No Content).
     // Our middleware already throws on non-2xx responses, so simply await the call.
-    await this.c.POST('/v1/{organization}/user/{requested_user_id}/user', {
+    await this.c.POST('/v1/{organization}/user/{requested_user_id}', {
       params: { path: { organization: this.orgId, requested_user_id: userId } },
       body,
       headers,
