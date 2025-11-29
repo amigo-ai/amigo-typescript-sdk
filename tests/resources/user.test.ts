@@ -213,7 +213,7 @@ describe('UserResource', () => {
     test('returns void on 204 success and sends body and headers', async () => {
       server.use(
         ...withMockAuth(
-          http.post('https://api.example.com/v1/test-org/user/u-1/user', async ({ request }) => {
+          http.post('https://api.example.com/v1/test-org/user/u-1', async ({ request }) => {
             const body =
               (await request.json()) as components['schemas']['user__update_user_info__Request']
             expect(body.first_name).toBe('Grace')
@@ -241,7 +241,7 @@ describe('UserResource', () => {
     test('throws ValidationError on 422', async () => {
       server.use(
         ...withMockAuth(
-          http.post('https://api.example.com/v1/test-org/user/u-1/user', () =>
+          http.post('https://api.example.com/v1/test-org/user/u-1', () =>
             HttpResponse.json(
               { detail: 'bad' },
               { status: 422, statusText: 'Unprocessable Entity' }
