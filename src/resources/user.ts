@@ -36,8 +36,8 @@ export class UserResource {
   async deleteUser(userId: string, headers?: operations['delete-user']['parameters']['header']) {
     // DELETE endpoints returns no content (e.g., 204 No Content).
     // Our middleware already throws on non-2xx responses, so simply await the call.
-    await this.c.DELETE('/v1/{organization}/user/{user_id}', {
-      params: { path: { organization: this.orgId, user_id: userId } },
+    await this.c.DELETE('/v1/{organization}/user/{requested_user_id}', {
+      params: { path: { organization: this.orgId, requested_user_id: userId } },
       headers,
     })
     return
@@ -50,8 +50,8 @@ export class UserResource {
   ) {
     // UPDATE endpoint returns no content (e.g., 204 No Content).
     // Our middleware already throws on non-2xx responses, so simply await the call.
-    await this.c.POST('/v1/{organization}/user/{user_id}', {
-      params: { path: { organization: this.orgId, user_id: userId } },
+    await this.c.POST('/v1/{organization}/user/{requested_user_id}', {
+      params: { path: { organization: this.orgId, requested_user_id: userId } },
       body,
       headers,
     })
