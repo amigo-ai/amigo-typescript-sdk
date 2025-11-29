@@ -6,6 +6,15 @@ import type { components } from '../../src/generated/api-types'
 // Load environment variables from .env file
 loadEnv()
 
+const requiredEnvVars = ['AMIGO_API_KEY', 'AMIGO_API_KEY_ID', 'AMIGO_USER_ID', 'AMIGO_ORGANIZATION_ID'] as const
+const hasIntegrationEnv = requiredEnvVars.every(name => Boolean(process.env[name]))
+
+if (!hasIntegrationEnv) {
+  console.warn(`Skipping user integration tests. Missing one of: ${requiredEnvVars.join(', ')}`)
+}
+
+const integrationSuite = (hasIntegrationEnv ? describe.sequential : describe.skip) as typeof describe
+
 // Real API configuration - these should be valid credentials for testing
 const testConfig = {
   apiKey: process.env.AMIGO_API_KEY || 'test-api-key',
@@ -19,7 +28,7 @@ function createClient(config = testConfig) {
   return new AmigoClient(config)
 }
 
-describe.sequential('Integration - User (Real API)', () => {
+integrationSuite('Integration - User (Real API)', () => {
   let createdUserId: string | undefined
   let createdUserEmail: string | undefined
 

@@ -5,6 +5,17 @@ import { AmigoClient, errors } from '../../src/index'
 // Load environment variables from .env file
 config()
 
+const requiredEnvVars = ['AMIGO_API_KEY', 'AMIGO_API_KEY_ID', 'AMIGO_USER_ID', 'AMIGO_ORGANIZATION_ID'] as const
+const hasIntegrationEnv = requiredEnvVars.every(name => Boolean(process.env[name]))
+
+if (!hasIntegrationEnv) {
+  console.warn(
+    `Skipping organization integration tests. Missing one of: ${requiredEnvVars.join(', ')}`
+  )
+}
+
+const integrationSuite = (hasIntegrationEnv ? describe : describe.skip) as typeof describe
+
 /**
  * Integration tests for AmigoClient against real API endpoints.
  * These tests are skipped by default and should only be run manually during demos.
@@ -19,7 +30,7 @@ const testConfig = {
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
 }
 
-describe('Integration Tests - Real API', () => {
+integrationSuite('Integration Tests - Real API', () => {
   let client: AmigoClient
 
   test('should get organization data successfully', async () => {
