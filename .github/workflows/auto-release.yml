@@ -10,7 +10,7 @@ permissions:
 jobs:
   detect:
     name: Detect OpenAPI change
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
       spec_url: ${{ steps.spec.outputs.spec_url }}
