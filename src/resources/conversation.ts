@@ -167,7 +167,7 @@ export class ConversationResource {
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
   ) {
     return extractData(
-      this.c.GET(
+      this.c.POST(
         '/v1/{organization}/conversation/{conversation_id}/interaction/{interaction_id}/recommend_responses',
         {
           params: {
