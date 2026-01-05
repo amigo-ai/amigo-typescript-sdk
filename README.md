@@ -17,6 +17,8 @@ npm install @amigo-ai/sdk
 
 ## Quick Start
 
+### ES Modules (ESM)
+
 ```typescript
 import { AmigoClient } from '@amigo-ai/sdk'
 
@@ -42,6 +44,19 @@ async function example() {
 }
 
 example()
+```
+
+### CommonJS (CJS)
+
+```javascript
+const { AmigoClient } = require('@amigo-ai/sdk')
+
+const client = new AmigoClient({
+  apiKey: 'your-api-key',
+  apiKeyId: 'your-api-key-id',
+  userId: 'user-id',
+  orgId: 'your-organization-id',
+})
 ```
 
 ## Examples

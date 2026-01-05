@@ -3,16 +3,28 @@ import { rm } from 'node:fs/promises'
 
 await rm('dist', { recursive: true, force: true })
 
-await build({
+const shared = {
   entryPoints: ['src/index.ts'],
-  outdir: 'dist',
   bundle: true,
-  format: 'esm',
   platform: 'neutral',
   target: 'es2020',
   minify: false,
   sourcemap: true,
   external: ['openapi-fetch'], // keep small, let consumer install once
+}
+
+// ESM build
+await build({
+  ...shared,
+  outfile: 'dist/index.mjs',
+  format: 'esm',
 })
 
-console.log('✨ Esbuild complete')
+// CJS build
+await build({
+  ...shared,
+  outfile: 'dist/index.cjs',
+  format: 'cjs',
+})
+
+console.log('✨ Esbuild complete (ESM + CJS)')
