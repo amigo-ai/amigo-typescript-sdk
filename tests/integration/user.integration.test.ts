@@ -79,11 +79,11 @@ describe.sequential('Integration - User (Real API)', () => {
     ).toBe(true)
   })
 
+  // use the test config user id because admin roles only grant access to other admin user models
   test('get user model returns user model data', async () => {
-    expect(createdUserId).toBeDefined()
     const client = createClient()
 
-    const result = await client.users.getUserModel(createdUserId!)
+    const result = await client.users.getUserModel(testConfig.userId)
     expect(result).toBeDefined()
     expect(Array.isArray(result.user_models)).toBe(true)
     expect(Array.isArray(result.additional_context)).toBe(true)
