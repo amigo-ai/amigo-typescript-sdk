@@ -110,7 +110,8 @@ export class ConversationResource {
         query: normalizedQuery as unknown as InteractQuery,
         header: headersToSend,
       },
-      body: bodyToSend,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      body: bodyToSend as any, // FormData/Blob not represented in generated OpenAPI types
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),
     })
@@ -164,7 +165,7 @@ export class ConversationResource {
   async recommendResponsesForInteraction(
     conversationId: string,
     interactionId: string,
-    body?: operations['recommend-responses-for-interaction']['requestBody']['content']['application/json'],
+    body?: { context?: string },
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
   ) {
     return extractData(

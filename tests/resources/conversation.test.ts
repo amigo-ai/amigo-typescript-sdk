@@ -593,7 +593,7 @@ describe('ConversationResource', () => {
       const mockResponse = { recommended_responses: [{ text: 'hello' }] }
       server.use(
         ...withMockAuth(
-          http.get(
+          http.post(
             'https://api.example.com/v1/test-org/conversation/conv-7/interaction/int-1/recommend_responses',
             () => HttpResponse.json(mockResponse)
           )
@@ -608,7 +608,7 @@ describe('ConversationResource', () => {
     test('throws NotFoundError on 404', async () => {
       server.use(
         ...withMockAuth(
-          http.get(
+          http.post(
             'https://api.example.com/v1/test-org/conversation/conv-7/interaction/missing/recommend_responses',
             () => HttpResponse.json(null, { status: 404, statusText: 'Not Found' })
           )
