@@ -164,10 +164,11 @@ export class ConversationResource {
   async recommendResponsesForInteraction(
     conversationId: string,
     interactionId: string,
+    body?: operations['recommend-responses-for-interaction']['requestBody']['content']['application/json'],
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
   ) {
     return extractData(
-      this.c.GET(
+      this.c.POST(
         '/v1/{organization}/conversation/{conversation_id}/interaction/{interaction_id}/recommend_responses',
         {
           params: {
@@ -177,6 +178,7 @@ export class ConversationResource {
               interaction_id: interactionId,
             },
           },
+          body,
           headers,
         }
       )
