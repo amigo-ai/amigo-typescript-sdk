@@ -5,6 +5,17 @@ import { AmigoClient, errors } from '../../src/index'
 // Load environment variables from .env file
 loadEnv()
 
+const requiredEnvVars = ['AMIGO_API_KEY', 'AMIGO_API_KEY_ID', 'AMIGO_USER_ID', 'AMIGO_ORGANIZATION_ID'] as const
+const hasIntegrationEnv = requiredEnvVars.every(name => Boolean(process.env[name]))
+
+if (!hasIntegrationEnv) {
+  console.warn(
+    `Skipping conversation integration tests. Missing one of: ${requiredEnvVars.join(', ')}`
+  )
+}
+
+const integrationSuite = (hasIntegrationEnv ? describe.sequential : describe.skip) as typeof describe
+
 // Real API configuration - these should be valid credentials for testing
 const testConfig = {
   apiKey: process.env.AMIGO_API_KEY || 'test-api-key',
@@ -15,7 +26,7 @@ const testConfig = {
 }
 
 // Use a single conversation across tests to reduce noise
-describe.sequential('Integration - Conversation (Real API)', () => {
+integrationSuite('Integration - Conversation (Real API)', () => {
   const serviceId = '689b81e7afdaf934f4b48f81'
   let client: AmigoClient
   let conversationId: string | undefined
