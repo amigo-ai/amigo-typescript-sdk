@@ -110,7 +110,8 @@ export class ConversationResource {
         query: normalizedQuery as unknown as InteractQuery,
         header: headersToSend,
       },
-      body: bodyToSend,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      body: bodyToSend as any, // FormData/Blob not represented in generated OpenAPI types
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),
     })
@@ -164,10 +165,11 @@ export class ConversationResource {
   async recommendResponsesForInteraction(
     conversationId: string,
     interactionId: string,
+    body?: { context?: string },
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
   ) {
     return extractData(
-      this.c.GET(
+      this.c.POST(
         '/v1/{organization}/conversation/{conversation_id}/interaction/{interaction_id}/recommend_responses',
         {
           params: {
@@ -177,6 +179,7 @@ export class ConversationResource {
               interaction_id: interactionId,
             },
           },
+          body,
           headers,
         }
       )
