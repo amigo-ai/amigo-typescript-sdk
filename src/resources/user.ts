@@ -57,4 +57,16 @@ export class UserResource {
     })
     return
   }
+
+  async getUserModel(
+    userId: string,
+    headers?: operations['get-user-model']['parameters']['header']
+  ) {
+    return extractData(
+      this.c.GET('/v1/{organization}/user/{user_id}/user_model', {
+        params: { path: { organization: this.orgId, user_id: userId } },
+        headers,
+      })
+    )
+  }
 }
