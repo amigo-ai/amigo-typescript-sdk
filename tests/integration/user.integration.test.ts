@@ -79,6 +79,16 @@ describe.sequential('Integration - User (Real API)', () => {
     ).toBe(true)
   })
 
+  test('get user model returns user model data', async () => {
+    expect(createdUserId).toBeDefined()
+    const client = createClient()
+
+    const result = await client.users.getUserModel(createdUserId!)
+    expect(result).toBeDefined()
+    expect(Array.isArray(result.user_models)).toBe(true)
+    expect(Array.isArray(result.additional_context)).toBe(true)
+  })
+
   test('delete the test user returns 204/void', async () => {
     expect(createdUserId).toBeDefined()
     const client = createClient()
