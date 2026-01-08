@@ -12,11 +12,12 @@ const testConfig = {
   userId: process.env.AMIGO_USER_ID || 'test-user-id',
   orgId: process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id',
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
+  serviceId: process.env.AMIGO_TEST_SERVICE_ID || '6960124e9b05e7710da71baf',
 }
 
 // Use a single conversation across tests to reduce noise
 describe.sequential('Integration - Conversation (Real API)', () => {
-  const serviceId = '689b81e7afdaf934f4b48f81'
+  const serviceId = testConfig.serviceId
   let client: AmigoClient
   let conversationId: string | undefined
   let interactionId: string | undefined
