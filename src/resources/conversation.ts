@@ -62,8 +62,8 @@ export class ConversationResource {
         throw new BadRequestError("textMessage is required when request_format is 'text'")
       }
       const form = new FormData()
-      const blob = new Blob([input], { type: 'text/plain; charset=utf-8' })
-      form.append('recorded_message', blob, 'message.txt')
+      form.append('initial_message_type', 'user-message')
+      form.append('recorded_message', input)
       bodyToSend = form
     } else if (queryParams.request_format === 'voice') {
       if (typeof input === 'string') {
