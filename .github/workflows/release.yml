@@ -174,7 +174,7 @@ jobs:
           if [ -z "$COMMIT_LIST" ]; then
             COMMIT_LIST="- (no new commits found)"
           fi
-          cat <<'EOF' > release-notes.md
+          cat <<EOF > release-notes.md
           ## Changes in v${{ steps.new_version.outputs.version }}
 
           This release was automatically created by the GitHub Actions release workflow.
@@ -182,7 +182,7 @@ jobs:
           ### New commits
           EOF
           echo "$COMMIT_LIST" >> release-notes.md
-          cat <<'EOF' >> release-notes.md
+          cat <<EOF >> release-notes.md
 
           ### Package Information
           - Version: ${{ steps.new_version.outputs.version }}
