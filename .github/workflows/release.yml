@@ -166,6 +166,31 @@ jobs:
           git tag -a "v${{ steps.new_version.outputs.version }}" -m "Release v${{ steps.new_version.outputs.version }}"
           git push origin "v${{ steps.new_version.outputs.version }}"
 
+      - name: Build release notes
+        if: ${{ !inputs.dry_run }}
+        run: |
+          PREV_TAG="v${{ steps.current_version.outputs.version }}"
+          COMMIT_LIST=$(git log --pretty=format:'- %s - %an (%h)' "${PREV_TAG}..HEAD" | sed -E "s/\\(#([0-9]+)\\)/([#\\1](https:\\/\\/github.com\\/${GITHUB_REPOSITORY}\\/pull\\/\\1))/g")
+          if [ -z "$COMMIT_LIST" ]; then
+            COMMIT_LIST="- (no new commits found)"
+          fi
+          cat <<'EOF' > release-notes.md
+          ## Changes in v${{ steps.new_version.outputs.version }}
+
+          This release was automatically created by the GitHub Actions release workflow.
+
+          ### New commits
+          EOF
+          echo "$COMMIT_LIST" >> release-notes.md
+          cat <<'EOF' >> release-notes.md
+
+          ### Package Information
+          - Version: ${{ steps.new_version.outputs.version }}
+
+          ### Installation
+          npm install @amigo-ai/sdk
+          EOF
+
       - name: Create GitHub Release
         if: ${{ !inputs.dry_run }}
         uses: softprops/action-gh-release@v2
@@ -173,16 +198,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           tag_name: 'v${{ steps.new_version.outputs.version }}'
           name: 'Release v${{ steps.new_version.outputs.version }}'
-          body: |
-            ## Changes in v${{ steps.new_version.outputs.version }}
-
-            This release was automatically created by the GitHub Actions release workflow.
-
-            ### Package Information
-            - Version: ${{ steps.new_version.outputs.version }}
-
-            ### Installation
-            npm install @amigo-ai/sdk
+          body_path: release-notes.md
           draft: false
           files: |
             ${{ steps.pack.outputs.file }}
