@@ -2,7 +2,7 @@
 #  Core Node / TypeScript build artifacts  #
 ############################################
 node_modules/
-dist/
+/dist/
 build/
 *.tsbuildinfo            # incremental tsc cache
 .eslintcache
