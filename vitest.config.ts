@@ -14,10 +14,20 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['tests/**/*.{test,spec}.{js,ts}', 'src/**/*.{test,spec}.{js,ts}'],
-          exclude: ['node_modules', 'dist', 'tests/integration/**'],
+          exclude: ['node_modules', 'dist', 'tests/integration/**', 'tests/dist/**'],
         },
       },
-      // Integration tests
+      // Distribution tests (verify built artifacts work correctly)
+      // These require `npm run build` to have been run first
+      {
+        test: {
+          name: 'dist',
+          include: ['tests/dist/**/*.{test,spec}.{js,ts}'],
+          // Override default exclude which includes **/dist/** (conflicts with tests/dist/)
+          exclude: ['**/node_modules/**'],
+        },
+      },
+      // Integration tests (require API credentials)
       {
         test: {
           name: 'integration',

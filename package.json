@@ -14,6 +14,7 @@
   "scripts": {
     "gen-types": "node scripts/gen.mjs",
     "test": "vitest run --project unit",
+    "test:dist": "vitest run --project dist",
     "test:integration": "vitest run --project integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --project unit",

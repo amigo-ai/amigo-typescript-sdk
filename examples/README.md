@@ -28,16 +28,24 @@ All examples use a shared `examples/package.json` to install dependencies from n
 
 Files:
 
-- `conversation/basic-conversation.ts`: End‑to‑end flow with simple event logging.
+- `conversation/basic-conversation.ts`: End‑to‑end flow with simple event logging (TypeScript/ESM).
+- `conversation/basic-conversation.cjs`: Same flow using CommonJS `require()` syntax for non-ESM environments.
 - `conversation/conversation-events.ts`: Handler‑style event processing, truncates verbose `new-message` events, and demonstrates timeout/AbortSignal usage.
 
 ### Run
 
-- Basic conversation example:
+- Basic conversation example (TypeScript):
 
   ```bash
   cd examples
   npm run start:basic --silent
+  ```
+
+- Basic conversation example (CommonJS):
+
+  ```bash
+  cd examples
+  npm run start:basic-cjs --silent
   ```
 
 - Conversation events example:
