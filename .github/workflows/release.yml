@@ -212,7 +212,8 @@ jobs:
           } > release-notes.md
 
           # Convert PR references (#123) to clickable links
-          sed -i -E "s#\(#([0-9]+)\)#([#\1](https://github.com/${GITHUB_REPOSITORY}/pull/\1))#g" release-notes.md
+          # Use @ as delimiter since # appears in the pattern
+          sed -i -E "s@\(#([0-9]+)\)@([#\1](https://github.com/${GITHUB_REPOSITORY}/pull/\1))@g" release-notes.md
 
           echo "📝 Generated release notes:"
           cat release-notes.md
