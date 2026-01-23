@@ -160,36 +160,68 @@ jobs:
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
 
+      - name: Build release notes
+        if: ${{ !inputs.dry_run }}
+        run: |
+          PREV_TAG="v${{ steps.current_version.outputs.version }}"
+          NEW_TAG="v${{ steps.new_version.outputs.version }}"
+
+          {
+            echo "## What's Changed in ${NEW_TAG}"
+            echo ""
+
+            # Features (feat: or feat(scope):)
+            FEATS=$(git log --pretty=format:'- %s (%h)' "${PREV_TAG}..HEAD" | grep -iE '^- feat(\(.*\))?:' | sed -E 's/^- feat(\([^)]*\))?:[[:space:]]*/- /' || true)
+            if [ -n "$FEATS" ]; then
+              echo "### Features"
+              echo "$FEATS"
+              echo ""
+            fi
+
+            # Bug fixes (fix: or fix(scope):)
+            FIXES=$(git log --pretty=format:'- %s (%h)' "${PREV_TAG}..HEAD" | grep -iE '^- fix(\(.*\))?:' | sed -E 's/^- fix(\([^)]*\))?:[[:space:]]*/- /' || true)
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+
+            # Other changes (excluding chore, docs, refactor, test, ci, build, style)
+            OTHER=$(git log --pretty=format:'- %s (%h)' "${PREV_TAG}..HEAD" | grep -ivE '^- (feat|fix|chore|docs|refactor|test|ci|build|style)(\(.*\))?:' || true)
+            if [ -n "$OTHER" ]; then
+              echo "### Other Changes"
+              echo "$OTHER"
+              echo ""
+            fi
+
+            # If no categorized commits found, list all
+            if [ -z "$FEATS" ] && [ -z "$FIXES" ] && [ -z "$OTHER" ]; then
+              echo "### Changes"
+              git log --pretty=format:'- %s (%h)' "${PREV_TAG}..HEAD" || echo "- (no commits found)"
+              echo ""
+            fi
+
+            echo "---"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREV_TAG}...${NEW_TAG}"
+            echo ""
+            echo "### Installation"
+            echo "\`\`\`bash"
+            echo "npm install @amigo-ai/sdk@${{ steps.new_version.outputs.version }}"
+            echo "\`\`\`"
+          } > release-notes.md
+
+          # Convert PR references (#123) to clickable links
+          sed -i -E "s#\(#([0-9]+)\)#([#\1](https://github.com/${GITHUB_REPOSITORY}/pull/\1))#g" release-notes.md
+
+          echo "📝 Generated release notes:"
+          cat release-notes.md
+
       - name: Create and push tag
         if: ${{ !inputs.dry_run }}
         run: |
           git tag -a "v${{ steps.new_version.outputs.version }}" -m "Release v${{ steps.new_version.outputs.version }}"
           git push origin "v${{ steps.new_version.outputs.version }}"
-
-      - name: Build release notes
-        if: ${{ !inputs.dry_run }}
-        run: |
-          PREV_TAG="v${{ steps.current_version.outputs.version }}"
-          COMMIT_LIST=$(git log --pretty=format:'- %s - %an (%h)' "${PREV_TAG}..HEAD" | sed -E "s#\\(#([0-9]+)\\)#([#\\1](https://github.com/${GITHUB_REPOSITORY}/pull/\\1))#g")
-          if [ -z "$COMMIT_LIST" ]; then
-            COMMIT_LIST="- (no new commits found)"
-          fi
-          cat <<EOF > release-notes.md
-          ## Changes in v${{ steps.new_version.outputs.version }}
-
-          This release was automatically created by the GitHub Actions release workflow.
-
-          ### New commits
-          EOF
-          echo "$COMMIT_LIST" >> release-notes.md
-          cat <<EOF >> release-notes.md
-
-          ### Package Information
-          - Version: ${{ steps.new_version.outputs.version }}
-
-          ### Installation
-          npm install @amigo-ai/sdk
-          EOF
 
       - name: Create GitHub Release
         if: ${{ !inputs.dry_run }}
