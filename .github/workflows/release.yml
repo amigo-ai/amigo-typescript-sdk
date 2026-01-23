@@ -163,8 +163,15 @@ jobs:
       - name: Build release notes
         if: ${{ !inputs.dry_run }}
         run: |
-          PREV_TAG="v${{ steps.current_version.outputs.version }}"
+          # Get the most recent git tag (not from package.json, which may be ahead if a prior release failed)
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           NEW_TAG="v${{ steps.new_version.outputs.version }}"
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "⚠️ No previous tag found, listing all commits"
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)  # First commit
+          fi
+          echo "📋 Generating release notes: ${PREV_TAG}..HEAD → ${NEW_TAG}"
 
           {
             echo "## What's Changed in ${NEW_TAG}"
