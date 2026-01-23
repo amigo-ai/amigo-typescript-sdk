@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from 'vitest'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -17,7 +17,7 @@ const esmDistPath = resolve(rootDir, 'dist/index.mjs')
  */
 function runFixture(fixtureName: string): string {
   const fixturePath = resolve(fixturesDir, fixtureName)
-  return execSync(`node ${fixturePath}`, {
+  return execFileSync('node', [fixturePath], {
     cwd: rootDir,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
