@@ -170,7 +170,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           PREV_TAG="v${{ steps.current_version.outputs.version }}"
-          COMMIT_LIST=$(git log --pretty=format:'- %s - %an (%h)' "${PREV_TAG}..HEAD" | sed -E "s/\\(#([0-9]+)\\)/([#\\1](https:\\/\\/github.com\\/${GITHUB_REPOSITORY}\\/pull\\/\\1))/g")
+          COMMIT_LIST=$(git log --pretty=format:'- %s - %an (%h)' "${PREV_TAG}..HEAD" | sed -E "s#\\(#([0-9]+)\\)#([#\\1](https://github.com/${GITHUB_REPOSITORY}/pull/\\1))#g")
           if [ -z "$COMMIT_LIST" ]; then
             COMMIT_LIST="- (no new commits found)"
           fi
