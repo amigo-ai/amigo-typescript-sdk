@@ -4,7 +4,17 @@ import { extractData, parseNdjsonStream } from '../core/utils'
 import type { components, operations } from '../generated/api-types'
 
 type VoiceData = Blob | Uint8Array | ReadableStream<Uint8Array>
-export type InteractionInput = string | VoiceData
+export type ExternalEventMessage = { content: string; timestamp: string }
+export type TextInteractionInput =
+  | string
+  | {
+      message: string
+      initialMessageType?: 'user-message' | 'external-event'
+      externalEventMessages?: ExternalEventMessage[]
+      externalEventMessageContents?: string[]
+      externalEventMessageTimestamps?: string[]
+    }
+export type InteractionInput = TextInteractionInput | VoiceData
 
 type InteractQuery = operations['interact-with-conversation']['parameters']['query']
 type InteractQuerySerialized = Omit<InteractQuery, 'request_audio_config'> & {
@@ -58,15 +68,22 @@ export class ConversationResource {
     }
 
     if (queryParams.request_format === 'text') {
-      if (typeof input !== 'string') {
+      if (typeof input !== 'string' && !isTextInteractionInput(input)) {
         throw new BadRequestError("textMessage is required when request_format is 'text'")
       }
+      const textInput = normalizeTextInteractionInput(input)
       const form = new FormData()
-      form.append('initial_message_type', 'user-message')
-      form.append('recorded_message', input)
+      form.append('initial_message_type', textInput.initialMessageType)
+      form.append('recorded_message', textInput.message)
+      appendFormArray(form, 'external_event_message_content', textInput.externalEventMessageContents)
+      appendFormArray(
+        form,
+        'external_event_message_timestamp',
+        textInput.externalEventMessageTimestamps
+      )
       bodyToSend = form
     } else if (queryParams.request_format === 'voice') {
-      if (typeof input === 'string') {
+      if (typeof input === 'string' || isTextInteractionInput(input)) {
         throw new BadRequestError(
           "voice input must be a byte source when request_format is 'voice'"
         )
@@ -240,5 +257,80 @@ export class ConversationResource {
         headers,
       })
     )
+  }
+}
+
+function isTextInteractionInput(input: InteractionInput): input is Exclude<TextInteractionInput, string> {
+  return typeof input === 'object' && input !== null && 'message' in input
+}
+
+function normalizeTextInteractionInput(
+  input: TextInteractionInput
+): {
+  message: string
+  initialMessageType: 'user-message' | 'external-event'
+  externalEventMessageContents?: string[]
+  externalEventMessageTimestamps?: string[]
+} {
+  if (typeof input === 'string') {
+    return {
+      message: input,
+      initialMessageType: 'user-message',
+    }
+  }
+
+  if (typeof input.message !== 'string') {
+    throw new BadRequestError('textMessage must be a string when request_format is text')
+  }
+
+  const initialMessageType = input.initialMessageType ?? 'user-message'
+  if (initialMessageType !== 'user-message' && initialMessageType !== 'external-event') {
+    throw new BadRequestError('initialMessageType must be user-message or external-event')
+  }
+
+  if (input.externalEventMessages && (input.externalEventMessageContents || input.externalEventMessageTimestamps)) {
+    throw new BadRequestError(
+      'Provide either externalEventMessages or externalEventMessageContents/externalEventMessageTimestamps'
+    )
+  }
+
+  let externalEventMessageContents = input.externalEventMessageContents
+  let externalEventMessageTimestamps = input.externalEventMessageTimestamps
+
+  if (input.externalEventMessages) {
+    externalEventMessageContents = input.externalEventMessages.map((message) => message.content)
+    externalEventMessageTimestamps = input.externalEventMessages.map((message) => message.timestamp)
+  }
+
+  const hasContents = externalEventMessageContents !== undefined
+  const hasTimestamps = externalEventMessageTimestamps !== undefined
+  if (hasContents !== hasTimestamps) {
+    throw new BadRequestError(
+      'externalEventMessageContents and externalEventMessageTimestamps must be provided together'
+    )
+  }
+
+  if (
+    externalEventMessageContents &&
+    externalEventMessageTimestamps &&
+    externalEventMessageContents.length !== externalEventMessageTimestamps.length
+  ) {
+    throw new BadRequestError(
+      'externalEventMessageContents and externalEventMessageTimestamps must have the same length'
+    )
+  }
+
+  return {
+    message: input.message,
+    initialMessageType,
+    externalEventMessageContents,
+    externalEventMessageTimestamps,
+  }
+}
+
+function appendFormArray(form: FormData, key: string, values?: string[]) {
+  if (!values) return
+  for (const value of values) {
+    form.append(key, value)
   }
 }
