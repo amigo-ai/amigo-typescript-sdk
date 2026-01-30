@@ -75,7 +75,11 @@ export class ConversationResource {
       const form = new FormData()
       form.append('initial_message_type', textInput.initialMessageType)
       form.append('recorded_message', textInput.message)
-      appendFormArray(form, 'external_event_message_content', textInput.externalEventMessageContents)
+      appendFormArray(
+        form,
+        'external_event_message_content',
+        textInput.externalEventMessageContents
+      )
       appendFormArray(
         form,
         'external_event_message_timestamp',
@@ -260,13 +264,13 @@ export class ConversationResource {
   }
 }
 
-function isTextInteractionInput(input: InteractionInput): input is Exclude<TextInteractionInput, string> {
+function isTextInteractionInput(
+  input: InteractionInput
+): input is Exclude<TextInteractionInput, string> {
   return typeof input === 'object' && input !== null && 'message' in input
 }
 
-function normalizeTextInteractionInput(
-  input: TextInteractionInput
-): {
+function normalizeTextInteractionInput(input: TextInteractionInput): {
   message: string
   initialMessageType: 'user-message' | 'external-event'
   externalEventMessageContents?: string[]
@@ -288,7 +292,10 @@ function normalizeTextInteractionInput(
     throw new BadRequestError('initialMessageType must be user-message or external-event')
   }
 
-  if (input.externalEventMessages && (input.externalEventMessageContents || input.externalEventMessageTimestamps)) {
+  if (
+    input.externalEventMessages &&
+    (input.externalEventMessageContents || input.externalEventMessageTimestamps)
+  ) {
     throw new BadRequestError(
       'Provide either externalEventMessages or externalEventMessageContents/externalEventMessageTimestamps'
     )
@@ -298,8 +305,8 @@ function normalizeTextInteractionInput(
   let externalEventMessageTimestamps = input.externalEventMessageTimestamps
 
   if (input.externalEventMessages) {
-    externalEventMessageContents = input.externalEventMessages.map((message) => message.content)
-    externalEventMessageTimestamps = input.externalEventMessages.map((message) => message.timestamp)
+    externalEventMessageContents = input.externalEventMessages.map(message => message.content)
+    externalEventMessageTimestamps = input.externalEventMessages.map(message => message.timestamp)
   }
 
   const hasContents = externalEventMessageContents !== undefined
