@@ -238,6 +238,59 @@ describe('ConversationResource', () => {
       expect(interactionId).toBe('i-10')
     })
 
+    test('supports external event messages for text interactions', async () => {
+      const stream = createNdjsonStream([{ type: 'interaction-complete', interaction_id: 'i-12' }])
+
+      server.use(
+        ...withMockAuth(
+          http.post(
+            'https://api.example.com/v1/test-org/conversation/conv-external/interact',
+            async ({ request }) => {
+              const form = await request.formData()
+              expect(form.get('initial_message_type')).toBe('user-message')
+              expect(form.get('recorded_message')).toBe('hello world')
+              expect(form.getAll('external_event_message_content')).toEqual([
+                'event one',
+                'event two',
+              ])
+              expect(form.getAll('external_event_message_timestamp')).toEqual([
+                '2024-01-01T00:00:00Z',
+                '2024-01-01T00:01:00Z',
+              ])
+              return new Response(stream, {
+                status: 200,
+                headers: { 'Content-Type': 'application/x-ndjson' },
+              })
+            }
+          )
+        )
+      )
+
+      const client = createAmigoFetch(mockConfig)
+      const resource = new ConversationResource(client, 'test-org')
+
+      const events = await resource.interactWithConversation(
+        'conv-external',
+        {
+          message: 'hello world',
+          externalEventMessages: [
+            { content: 'event one', timestamp: '2024-01-01T00:00:00Z' },
+            { content: 'event two', timestamp: '2024-01-01T00:01:00Z' },
+          ],
+        },
+        {
+          request_format: 'text',
+          response_format: 'text',
+        }
+      )
+
+      let interactionId: string | undefined
+      for await (const evt of events) {
+        if (evt.type === 'interaction-complete') interactionId = evt.interaction_id
+      }
+      expect(interactionId).toBe('i-12')
+    })
+
     test('simple: voice input (stream) with request_format=voice sends raw body and streams', async () => {
       const responseStream = createNdjsonStream([
         { type: 'interaction-complete', interaction_id: 'i-11' },
