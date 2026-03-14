@@ -3,10 +3,10 @@
  */
 'use strict'
 
-const { errors } = require('../../../dist/index.cjs')
+const { AmigoError, isAmigoError } = require('../../../dist/index.cjs')
 
 // Test error instantiation
-const err = new errors.AmigoError('test message')
+const err = new AmigoError('test message')
 if (!(err instanceof Error)) {
   throw new Error('AmigoError should be instanceof Error')
 }
@@ -15,10 +15,10 @@ if (err.message !== 'test message') {
 }
 
 // Test error type checking
-if (!errors.isAmigoError(err)) {
+if (!isAmigoError(err)) {
   throw new Error('isAmigoError should return true for AmigoError')
 }
-if (errors.isAmigoError(new Error('plain'))) {
+if (isAmigoError(new Error('plain'))) {
   throw new Error('isAmigoError should return false for plain Error')
 }
 

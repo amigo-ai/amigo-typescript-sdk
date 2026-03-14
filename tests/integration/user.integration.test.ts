@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, test, expect } from 'vitest'
 import { config as loadEnv } from 'dotenv'
-import { AmigoClient, errors } from '../../src/index'
+import { AmigoClient, NotFoundError } from '../../src/index'
 import type { components } from '../../src/generated/api-types'
 
 // Load environment variables from .env file
@@ -52,7 +53,7 @@ describe.sequential('Integration - User (Real API)', () => {
       timezone: {},
     }
 
-    await client.users.updateUser(createdUserId!, updateBody as any)
+    await client.users.updateUser({ userId: createdUserId!, body: updateBody as any })
   })
 
   test('get users returns the created user and supports filtering', async () => {
@@ -104,7 +105,7 @@ describe.sequential('Integration - User (Real API)', () => {
       email: `bad-role-${Date.now().toString(36)}@example.com`,
       role_name: 'role-that-does-not-exist',
     }
-    await expect(client.users.createUser(body)).rejects.toThrow(errors.NotFoundError)
+    await expect(client.users.createUser(body)).rejects.toThrow(NotFoundError)
   })
 
   test('update user for non-existent id returns NotFoundError', async () => {
@@ -115,18 +116,18 @@ describe.sequential('Integration - User (Real API)', () => {
       preferred_language: null,
       timezone: null,
     }
-    await expect(client.users.updateUser('non-existent-id', body)).rejects.toThrow(
-      errors.NotFoundError
+    await expect(client.users.updateUser({ userId: 'non-existent-id', body })).rejects.toThrow(
+      NotFoundError
     )
   })
 
   test('get users for invalid org returns NotFoundError', async () => {
     const invalidClient = createClient({ ...testConfig, orgId: 'invalid-org-id-123' })
-    await expect(invalidClient.users.getUsers()).rejects.toThrow(errors.NotFoundError)
+    await expect(invalidClient.users.getUsers()).rejects.toThrow(NotFoundError)
   })
 
   test('delete non-existent user returns NotFoundError', async () => {
     const client = createClient()
-    await expect(client.users.deleteUser('non-existent-id')).rejects.toThrow(errors.NotFoundError)
+    await expect(client.users.deleteUser('non-existent-id')).rejects.toThrow(NotFoundError)
   })
 })

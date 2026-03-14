@@ -1,9 +1,9 @@
 ---
 name: Feature Request
 about: Suggest a feature for the Amigo TypeScript SDK
-title: "[Feature] "
+title: '[Feature] '
 labels: enhancement
-assignees: ""
+assignees: ''
 ---
 
 ## Description

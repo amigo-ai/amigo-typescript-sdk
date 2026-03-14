@@ -5,7 +5,14 @@
 // Environment variables are loaded from .env via dotenv (see examples/.env.example).
 
 import 'dotenv/config'
-import { AmigoClient, errors, type AmigoSdkConfig, components } from '@amigo-ai/sdk'
+import {
+  AmigoClient,
+  AmigoError,
+  ConflictError,
+  NotFoundError,
+  type AmigoSdkConfig,
+  components,
+} from '@amigo-ai/sdk'
 
 async function run(): Promise<void> {
   const config: AmigoSdkConfig = {
@@ -27,10 +34,10 @@ async function run(): Promise<void> {
   try {
     // 1) Create a conversation and log streamed events
     console.log('\nCreating conversation...')
-    const createEvents = await client.conversations.createConversation(
-      { service_id: serviceId, service_version_set_name: 'release' },
-      { response_format: 'text' }
-    )
+    const createEvents = await client.conversations.createConversation({
+      body: { service_id: serviceId, service_version_set_name: 'release' },
+      query: { response_format: 'text' },
+    })
 
     let conversationId: string | undefined
     const logCreate = makeEventLogger('create')
@@ -50,13 +57,13 @@ async function run(): Promise<void> {
     const listById = await client.conversations.getConversations({ id: [conversationId] })
     console.log(listById)
 
-    // 3) Interact with the conversation via text (high-level helper) and log streamed events
+    // 3) Interact with the conversation via text and log streamed events
     console.log('\nSending a text message to the conversation...')
-    const interactionEvents = await client.conversations.interactWithConversation(
+    const interactionEvents = await client.conversations.interactWithConversation({
       conversationId,
-      'Hello from the Amigo TypeScript SDK example!',
-      { request_format: 'text', response_format: 'text' }
-    )
+      input: 'Hello from the Amigo TypeScript SDK example!',
+      query: { request_format: 'text', response_format: 'text' },
+    })
 
     const logInteract = makeEventLogger('interact')
     for await (const evt of interactionEvents) {
@@ -68,9 +75,12 @@ async function run(): Promise<void> {
 
     // 4) Get messages for the conversation and log them
     console.log('\nFetching recent messages...')
-    const messagesPage = await client.conversations.getConversationMessages(conversationId, {
-      limit: 10,
-      sort_by: ['+created_at'],
+    const messagesPage = await client.conversations.getConversationMessages({
+      conversationId,
+      query: {
+        limit: 10,
+        sort_by: ['+created_at'],
+      },
     })
     for (const m of messagesPage.messages ?? []) {
       console.log('[message]', m)
@@ -79,10 +89,10 @@ async function run(): Promise<void> {
     // 5) Finish the conversation
     console.log('\nFinishing conversation...')
     try {
-      await client.conversations.finishConversation(conversationId)
+      await client.conversations.finishConversation({ conversationId })
       console.log('Conversation finished.')
     } catch (e) {
-      if (e instanceof errors.ConflictError || e instanceof errors.NotFoundError) {
+      if (e instanceof ConflictError || e instanceof NotFoundError) {
         console.warn(`Finish conversation warning: ${e.name} - ${e.message}`)
       } else {
         throw e
@@ -91,7 +101,7 @@ async function run(): Promise<void> {
 
     console.log('Done.')
   } catch (err) {
-    if (err instanceof errors.AmigoError) {
+    if (err instanceof AmigoError) {
       console.error(err)
     } else {
       console.error('Unexpected error:', err)

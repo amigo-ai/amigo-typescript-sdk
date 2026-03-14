@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { config } from 'dotenv'
-import { AmigoClient, errors } from '../../src/index'
+import { AmigoClient, NotFoundError, AuthenticationError } from '../../src/index'
 
 // Load environment variables from .env file
 config()
@@ -45,7 +45,7 @@ describe('Integration Tests - Real API', () => {
     }
     client = new AmigoClient(invalidConfig)
 
-    await expect(client.organizations.getOrganization()).rejects.toThrow(errors.NotFoundError)
+    await expect(client.organizations.getOrganization()).rejects.toThrow(NotFoundError)
   })
 
   test('should throw AuthenticationError for invalid credentials', async () => {
@@ -55,6 +55,6 @@ describe('Integration Tests - Real API', () => {
     }
     client = new AmigoClient(invalidConfig)
 
-    await expect(client.organizations.getOrganization()).rejects.toThrow(errors.AuthenticationError)
+    await expect(client.organizations.getOrganization()).rejects.toThrow(AuthenticationError)
   })
 })

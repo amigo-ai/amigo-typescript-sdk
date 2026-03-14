@@ -20,14 +20,15 @@ export class ConversationResource {
   ) {}
 
   /** Create a new conversation and return an async stream of NDJSON events. */
-  async createConversation(
-    body: components['schemas']['conversation__create_conversation__Request'],
-    queryParams: operations['create-conversation']['parameters']['query'],
-    headers?: operations['create-conversation']['parameters']['header'],
-    options?: { signal?: AbortSignal }
-  ) {
+  async createConversation(options: {
+    body: components['schemas']['conversation__create_conversation__Request']
+    query: operations['create-conversation']['parameters']['query']
+    headers?: operations['create-conversation']['parameters']['header']
+    signal?: AbortSignal
+  }) {
+    const { body, query, headers, signal } = options
     const resp = await this.c.POST('/v1/{organization}/conversation/', {
-      params: { path: { organization: this.orgId }, query: queryParams },
+      params: { path: { organization: this.orgId }, query },
       body,
       headers: {
         Accept: 'application/x-ndjson',
@@ -35,7 +36,7 @@ export class ConversationResource {
       } as operations['create-conversation']['parameters']['header'],
       // Ensure we receive a stream for NDJSON
       parseAs: 'stream',
-      ...(options?.signal && { signal: options.signal }),
+      ...(signal && { signal }),
     })
 
     // onResponse middleware throws for non-2xx; if we reach here, it's OK.
@@ -45,13 +46,14 @@ export class ConversationResource {
   }
 
   /** Send a text or voice interaction and return an async stream of NDJSON events. */
-  async interactWithConversation(
-    conversationId: ConversationId,
-    input: InteractionInput,
-    queryParams: operations['interact-with-conversation']['parameters']['query'],
-    headers?: operations['interact-with-conversation']['parameters']['header'],
-    options?: { signal?: AbortSignal }
-  ) {
+  async interactWithConversation(options: {
+    conversationId: ConversationId
+    input: InteractionInput
+    query: operations['interact-with-conversation']['parameters']['query']
+    headers?: operations['interact-with-conversation']['parameters']['header']
+    signal?: AbortSignal
+  }) {
+    const { conversationId, input, query, headers, signal } = options
     // Build body based on requested format, then perform a single POST
     let bodyToSend: FormData | VoiceData
 
@@ -61,7 +63,7 @@ export class ConversationResource {
       ...(headers ?? {}),
     }
 
-    if (queryParams.request_format === 'text') {
+    if (query.request_format === 'text') {
       if (typeof input !== 'string') {
         throw new BadRequestError("textMessage is required when request_format is 'text'")
       }
@@ -69,7 +71,7 @@ export class ConversationResource {
       form.append('initial_message_type', 'user-message')
       form.append('recorded_message', input)
       bodyToSend = form
-    } else if (queryParams.request_format === 'voice') {
+    } else if (query.request_format === 'voice') {
       if (typeof input === 'string') {
         throw new BadRequestError(
           "voice input must be a byte source when request_format is 'voice'"
@@ -81,13 +83,13 @@ export class ConversationResource {
     }
 
     // For text/FormData, do NOT set Content-Type; fetch will set multipart boundary
-    if (queryParams.request_format === 'text') {
+    if (query.request_format === 'text') {
       delete mergedHeaders['content-type']
       delete mergedHeaders['Content-Type']
     }
 
     // For voice bytes, allow caller to specify Content-Type; if absent and input is a Blob with a type, use it
-    if (queryParams.request_format === 'voice') {
+    if (query.request_format === 'voice') {
       const hasContentType =
         mergedHeaders['content-type'] !== undefined || mergedHeaders['Content-Type'] !== undefined
       if (!hasContentType && typeof Blob !== 'undefined' && input instanceof Blob && input.type) {
@@ -100,12 +102,11 @@ export class ConversationResource {
 
     // Normalize nested object params that must be sent as JSON strings
     const normalizedQuery: InteractQuerySerialized = {
-      ...queryParams,
+      ...query,
       request_audio_config:
-        typeof queryParams.request_audio_config === 'object' &&
-        queryParams.request_audio_config !== null
-          ? JSON.stringify(queryParams.request_audio_config)
-          : (queryParams.request_audio_config ?? undefined),
+        typeof query.request_audio_config === 'object' && query.request_audio_config !== null
+          ? JSON.stringify(query.request_audio_config)
+          : (query.request_audio_config ?? undefined),
     }
 
     const resp = await this.c.POST('/v1/{organization}/conversation/{conversation_id}/interact', {
@@ -117,7 +118,7 @@ export class ConversationResource {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       body: bodyToSend as any, // FormData/Blob not represented in generated OpenAPI types
       parseAs: 'stream',
-      ...(options?.signal && { signal: options.signal }),
+      ...(signal && { signal }),
     })
 
     return parseNdjsonStream<
@@ -138,25 +139,18 @@ export class ConversationResource {
     )
   }
 
-  /** Alias for getConversations. */
-  async list(
-    queryParams?: operations['get-conversations']['parameters']['query'],
-    headers?: operations['get-conversations']['parameters']['header']
-  ) {
-    return this.getConversations(queryParams, headers)
-  }
-
   /** Get messages for a conversation. */
-  async getConversationMessages(
-    conversationId: ConversationId,
-    queryParams?: operations['get-conversation-messages']['parameters']['query'],
+  async getConversationMessages(options: {
+    conversationId: ConversationId
+    query?: operations['get-conversation-messages']['parameters']['query']
     headers?: operations['get-conversation-messages']['parameters']['header']
-  ) {
+  }) {
+    const { conversationId, query, headers } = options
     return extractData(
       this.c.GET('/v1/{organization}/conversation/{conversation_id}/messages/', {
         params: {
           path: { organization: this.orgId, conversation_id: conversationId },
-          query: queryParams,
+          query,
         },
         headers,
       })
@@ -167,10 +161,11 @@ export class ConversationResource {
    * Finish (close) a conversation.
    * @returns void
    */
-  async finishConversation(
-    conversationId: ConversationId,
+  async finishConversation(options: {
+    conversationId: ConversationId
     headers?: operations['finish-conversation']['parameters']['header']
-  ): Promise<void> {
+  }): Promise<void> {
+    const { conversationId, headers } = options
     await this.c.POST('/v1/{organization}/conversation/{conversation_id}/finish/', {
       params: { path: { organization: this.orgId, conversation_id: conversationId } },
       headers,
@@ -181,12 +176,13 @@ export class ConversationResource {
   }
 
   /** Get recommended responses for an interaction. */
-  async recommendResponsesForInteraction(
-    conversationId: ConversationId,
-    interactionId: InteractionId,
-    body?: { context?: string },
+  async recommendResponsesForInteraction(options: {
+    conversationId: ConversationId
+    interactionId: InteractionId
+    body?: { context?: string }
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
-  ) {
+  }) {
+    const { conversationId, interactionId, body, headers } = options
     return extractData(
       this.c.POST(
         '/v1/{organization}/conversation/{conversation_id}/interaction/{interaction_id}/recommend_responses',
@@ -206,11 +202,12 @@ export class ConversationResource {
   }
 
   /** Get insights for an interaction. */
-  async getInteractionInsights(
-    conversationId: ConversationId,
-    interactionId: InteractionId,
+  async getInteractionInsights(options: {
+    conversationId: ConversationId
+    interactionId: InteractionId
     headers?: operations['get-interaction-insights']['parameters']['header']
-  ) {
+  }) {
+    const { conversationId, interactionId, headers } = options
     return extractData(
       this.c.GET(
         '/v1/{organization}/conversation/{conversation_id}/interaction/{interaction_id}/insights',
@@ -229,11 +226,12 @@ export class ConversationResource {
   }
 
   /** Get the audio/media source URL for a message. */
-  async getMessageSource(
-    conversationId: ConversationId,
-    messageId: MessageId,
+  async getMessageSource(options: {
+    conversationId: ConversationId
+    messageId: MessageId
     headers?: operations['retrieve-message-source']['parameters']['header']
-  ) {
+  }) {
+    const { conversationId, messageId, headers } = options
     return extractData(
       this.c.GET('/v1/{organization}/conversation/{conversation_id}/messages/{message_id}/source', {
         params: {
@@ -260,5 +258,35 @@ export class ConversationResource {
         headers,
       })
     )
+  }
+
+  // --- Convenience aliases ---
+
+  /** Alias for getConversations. */
+  async list(
+    queryParams?: operations['get-conversations']['parameters']['query'],
+    headers?: operations['get-conversations']['parameters']['header']
+  ) {
+    return this.getConversations(queryParams, headers)
+  }
+
+  /** Alias for createConversation. */
+  async create(options: Parameters<ConversationResource['createConversation']>[0]) {
+    return this.createConversation(options)
+  }
+
+  /** Alias for interactWithConversation. */
+  async interact(options: Parameters<ConversationResource['interactWithConversation']>[0]) {
+    return this.interactWithConversation(options)
+  }
+
+  /** Alias for finishConversation. */
+  async finish(options: Parameters<ConversationResource['finishConversation']>[0]) {
+    return this.finishConversation(options)
+  }
+
+  /** Alias for getConversationMessages. */
+  async messages(options: Parameters<ConversationResource['getConversationMessages']>[0]) {
+    return this.getConversationMessages(options)
   }
 }

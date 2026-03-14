@@ -34,7 +34,7 @@
       "eslint --fix --max-warnings 0",
       "prettier --write"
     ],
-    "tests/**/*.{ts,js,mjs}": [
+    "tests/**/*.ts": [
       "eslint --fix --max-warnings 0",
       "prettier --write"
     ],
@@ -52,6 +52,9 @@
   },
   "type": "module",
   "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amigo-ai/amigo-typescript-sdk.git"
@@ -83,8 +86,5 @@
   },
   "dependencies": {
     "openapi-fetch": "^0.14.0"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.34.8"
   }
 }

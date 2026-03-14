@@ -35,12 +35,15 @@ describe('SDK Error Tests', () => {
     const bodyWithMessage = { message: 'Custom error', code: 'ERR_CUSTOM' }
     const errorWithBody = createApiError(responseWithBody, bodyWithMessage)
     expect(errorWithBody.message).toBe('Custom error')
-    expect((errorWithBody as any).code).toBe('ERR_CUSTOM')
+    expect(errorWithBody.errorCode).toBe('ERR_CUSTOM')
   })
 
   test('AmigoError serializes to JSON correctly', () => {
-    const error = new AmigoError('Test error', { errorCode: 'TEST_CODE', statusCode: 400 })
-    error.context = { userId: '123' }
+    const error = new AmigoError('Test error', {
+      errorCode: 'TEST_CODE',
+      statusCode: 400,
+      context: { userId: '123' },
+    })
 
     const json = error.toJSON()
     expect(json).toEqual({

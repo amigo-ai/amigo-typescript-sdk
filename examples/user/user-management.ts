@@ -12,7 +12,7 @@
 // - Run: npm run start:user  (or: npx tsx user/user-management.ts)
 
 import 'dotenv/config'
-import { AmigoClient, errors, type AmigoSdkConfig } from '@amigo-ai/sdk'
+import { AmigoClient, AmigoError, NotFoundError, type AmigoSdkConfig } from '@amigo-ai/sdk'
 
 async function run(): Promise<void> {
   const config: AmigoSdkConfig = {
@@ -46,11 +46,14 @@ async function run(): Promise<void> {
 
     console.log('\n[2/5] Updating the user profile...')
     if (!createdUserId) throw new Error('User was not created (no id received).')
-    await client.users.updateUser(createdUserId, {
-      first_name: 'TS-Updated',
-      last_name: 'SDK-Example-Updated',
-      preferred_language: {},
-      timezone: {},
+    await client.users.updateUser({
+      userId: createdUserId,
+      body: {
+        first_name: 'TS-Updated',
+        last_name: 'SDK-Example-Updated',
+        preferred_language: {},
+        timezone: {},
+      },
     })
     console.log('User updated.')
 
@@ -68,7 +71,7 @@ async function run(): Promise<void> {
 
     console.log('\n[5/5] Done. Cleaning up...')
   } catch (err) {
-    if (err instanceof errors.AmigoError) {
+    if (err instanceof AmigoError) {
       console.error('[AmigoError]', err)
     } else {
       console.error('[Unexpected error]', err)
@@ -81,9 +84,9 @@ async function run(): Promise<void> {
         await client.users.deleteUser(createdUserId)
         console.log('Deleted user:', createdUserId)
       } catch (e) {
-        if (e instanceof errors.NotFoundError) {
+        if (e instanceof NotFoundError) {
           console.warn('User already deleted or not found.')
-        } else if (e instanceof errors.AmigoError) {
+        } else if (e instanceof AmigoError) {
           console.error('[Cleanup error]', e)
         } else {
           console.error('[Unexpected cleanup error]', e)

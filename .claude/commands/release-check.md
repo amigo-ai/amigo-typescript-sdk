@@ -1,4 +1,5 @@
 Verify the SDK is ready for release:
+
 1. Run `npm run lint` - must pass with zero warnings
 2. Run `npm run build` - must compile cleanly
 3. Run `npm test` - all tests must pass
