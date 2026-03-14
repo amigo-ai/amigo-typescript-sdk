@@ -23,6 +23,10 @@ export interface AmigoSdkConfig {
 
 const defaultBaseUrl = 'https://api.amigo.ai'
 
+/**
+ * Main client for the Amigo API.
+ * Provides access to all API resources (organizations, conversations, services, users).
+ */
 export class AmigoClient {
   readonly organizations: OrganizationResource
   readonly conversations: ConversationResource
@@ -30,6 +34,7 @@ export class AmigoClient {
   readonly users: UserResource
   readonly config: AmigoSdkConfig
 
+  /** Create a new Amigo client with the given configuration. */
   constructor(config: AmigoSdkConfig) {
     this.config = validateConfig(config)
 

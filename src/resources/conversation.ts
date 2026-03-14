@@ -11,12 +11,14 @@ type InteractQuerySerialized = Omit<InteractQuery, 'request_audio_config'> & {
   request_audio_config?: string | null
 }
 
+/** Resource for managing conversations and interactions. */
 export class ConversationResource {
   constructor(
     private c: AmigoFetch,
     private orgId: string
   ) {}
 
+  /** Create a new conversation and return an async stream of NDJSON events. */
   async createConversation(
     body: components['schemas']['conversation__create_conversation__Request'],
     queryParams: operations['create-conversation']['parameters']['query'],
@@ -41,6 +43,7 @@ export class ConversationResource {
     )
   }
 
+  /** Send a text or voice interaction and return an async stream of NDJSON events. */
   async interactWithConversation(
     conversationId: string,
     input: InteractionInput,
@@ -121,6 +124,7 @@ export class ConversationResource {
     >(resp.response)
   }
 
+  /** List conversations, optionally filtered by query parameters. */
   async getConversations(
     queryParams?: operations['get-conversations']['parameters']['query'],
     headers?: operations['get-conversations']['parameters']['header']
@@ -133,6 +137,7 @@ export class ConversationResource {
     )
   }
 
+  /** Get messages for a conversation. */
   async getConversationMessages(
     conversationId: string,
     queryParams?: operations['get-conversation-messages']['parameters']['query'],
@@ -149,6 +154,7 @@ export class ConversationResource {
     )
   }
 
+  /** Finish (close) a conversation. */
   async finishConversation(
     conversationId: string,
     headers?: operations['finish-conversation']['parameters']['header']
@@ -162,6 +168,7 @@ export class ConversationResource {
     return
   }
 
+  /** Get recommended responses for an interaction. */
   async recommendResponsesForInteraction(
     conversationId: string,
     interactionId: string,
@@ -186,6 +193,7 @@ export class ConversationResource {
     )
   }
 
+  /** Get insights for an interaction. */
   async getInteractionInsights(
     conversationId: string,
     interactionId: string,
@@ -208,8 +216,7 @@ export class ConversationResource {
     )
   }
 
-  // Note: the OpenAPI response schema isn't correct for this endpoint.
-  // TODO -- fix response typing.
+  /** Get the audio/media source URL for a message. */
   async getMessageSource(
     conversationId: string,
     messageId: string,
@@ -229,6 +236,7 @@ export class ConversationResource {
     )
   }
 
+  /** Generate conversation starter suggestions. */
   async generateConversationStarters(
     body: components['schemas']['conversation__generate_conversation_starter__Request'],
     headers?: operations['generate-conversation-starter']['parameters']['header']

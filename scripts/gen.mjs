@@ -67,6 +67,30 @@ if (brokenMappingsCount > 0) {
   console.warn(`⚠️  Removed ${brokenMappingsCount} broken discriminator mapping(s) from schema`)
 }
 
+// Fix duplicate operationIds by appending the HTTP method to make them unique.
+// The API sometimes reuses the same operationId across different HTTP methods on the same path.
+const seenOperationIds = new Map()
+let duplicateFixCount = 0
+
+for (const [path, methods] of Object.entries(schema.paths || {})) {
+  for (const [method, op] of Object.entries(methods)) {
+    if (typeof op !== 'object' || !op.operationId) continue
+    const key = op.operationId
+    if (seenOperationIds.has(key)) {
+      const newId = `${key}-${method}`
+      console.warn(`⚠️  Fixing duplicate operationId: ${key} -> ${newId} (${method.toUpperCase()} ${path})`)
+      op.operationId = newId
+      duplicateFixCount++
+    } else {
+      seenOperationIds.set(key, `${method.toUpperCase()} ${path}`)
+    }
+  }
+}
+
+if (duplicateFixCount > 0) {
+  console.warn(`⚠️  Fixed ${duplicateFixCount} duplicate operationId(s) in schema`)
+}
+
 /* -------- TypeScript types -------- */
 await mkdir(dirname(outTypesFile), { recursive: true })
 

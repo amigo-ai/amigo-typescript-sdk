@@ -14,6 +14,7 @@ export type RetryOptions = {
 const DEFAULT_RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504])
 const DEFAULT_RETRYABLE_METHODS = new Set(['GET']) as Set<string>
 
+/** Merge user-provided retry options with sensible defaults. */
 export function resolveRetryOptions(options?: RetryOptions): Required<RetryOptions> {
   return {
     maxAttempts: options?.maxAttempts ?? 3,
@@ -87,6 +88,7 @@ async function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   })
 }
 
+/** Wrap a fetch function with retry logic (exponential backoff, Retry-After support). */
 export function createRetryingFetch(
   retryOptions?: RetryOptions,
   baseFetch?: typeof fetch

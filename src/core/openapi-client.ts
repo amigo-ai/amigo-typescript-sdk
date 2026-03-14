@@ -16,6 +16,7 @@ import { createRetryingFetch } from './retry'
 
 export type AmigoFetch = Client<paths>
 
+/** Create an OpenAPI-typed fetch client with auth, error handling, and retry middleware. */
 export function createAmigoFetch(config: AmigoSdkConfig, mockFetch?: typeof fetch): AmigoFetch {
   const wrappedFetch = createRetryingFetch(
     config.retry,

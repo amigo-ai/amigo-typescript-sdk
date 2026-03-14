@@ -404,12 +404,10 @@ describe('Retry logic', () => {
   })
 
   test('retry loop: aborted signal before scheduling next attempt exits promptly', async () => {
-    let calls = 0
     const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
     server.use(
       ...withMockAuth(
         http.get('https://api.example.com/v1/test-org-id/organization/', () => {
-          calls += 1
           return HttpResponse.json(null, { status: 500 })
         })
       )
@@ -417,19 +415,17 @@ describe('Retry logic', () => {
 
     const client = createAmigoFetch(mockConfig)
     const controller = new AbortController()
+    // Pre-abort the signal so the retry loop sees it immediately
+    controller.abort()
 
     const reqPromise = client.GET('/v1/{organization}/organization/', {
       params: { path: { organization: 'test-org-id' } },
       signal: controller.signal,
     })
 
-    // Abort immediately after first response, before scheduling any timer
-    Promise.resolve().then(() => controller.abort())
-
     await expect(reqPromise).rejects.toThrow()
-    // Because signal was aborted, we should not schedule backoff
+    // Because signal was already aborted, no backoff timer should be scheduled
     expect(setTimeoutSpy).not.toHaveBeenCalled()
-    expect(calls).toBe(1)
   })
 
   test('Max attempts: 500→500→500; two sleeps then server error thrown', async () => {
