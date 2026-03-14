@@ -1,0 +1,11 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "exclude": ["**/generated/**", "**/node_modules/**"],
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "README.md",
+  "name": "@amigo-ai/sdk",
+  "plugin": [],
+  "tsconfig": "tsconfig.json"
+}
