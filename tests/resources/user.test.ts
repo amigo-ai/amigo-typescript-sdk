@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, test, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { createAmigoFetch } from '../../src/core/openapi-client'
 import { UserResource } from '../../src/resources/user'
 import { withMockAuth, mockConfig } from '../test-helpers'
+import { userId } from '../../src/core/branded-types'
 import { NotFoundError, ValidationError } from '../../src/core/errors'
 import type { components, operations } from '../../src/generated/api-types'
 
@@ -191,7 +193,7 @@ describe('UserResource', () => {
 
       const client = createAmigoFetch(mockConfig)
       const resource = new UserResource(client, 'test-org')
-      await expect(resource.deleteUser('u-1')).resolves.toBeUndefined()
+      await expect(resource.deleteUser(userId('u-1'))).resolves.toBeUndefined()
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -205,7 +207,7 @@ describe('UserResource', () => {
 
       const client = createAmigoFetch(mockConfig)
       const resource = new UserResource(client, 'test-org')
-      await expect(resource.deleteUser('missing')).rejects.toThrow(NotFoundError)
+      await expect(resource.deleteUser(userId('missing'))).rejects.toThrow(NotFoundError)
     })
   })
 
@@ -235,7 +237,7 @@ describe('UserResource', () => {
       const headers: operations['update-user-info']['parameters']['header'] = {
         'x-mongo-cluster-name': 'xyz',
       }
-      await expect(resource.updateUser('u-1', body, headers)).resolves.toBeUndefined()
+      await expect(resource.updateUser(userId('u-1'), body, headers)).resolves.toBeUndefined()
     })
 
     test('throws ValidationError on 422', async () => {
@@ -253,7 +255,7 @@ describe('UserResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new UserResource(client, 'test-org')
       const body = { invalidBodyKey: 'abc' }
-      await expect(resource.updateUser('u-1', body as any)).rejects.toThrow(ValidationError)
+      await expect(resource.updateUser(userId('u-1'), body as any)).rejects.toThrow(ValidationError)
     })
   })
 
@@ -271,7 +273,7 @@ describe('UserResource', () => {
 
       const client = createAmigoFetch(mockConfig)
       const resource = new UserResource(client, 'test-org')
-      const result = await resource.getUserModel('u-1')
+      const result = await resource.getUserModel(userId('u-1'))
 
       expect(result).toEqual(mockResponse as unknown)
     })
@@ -294,7 +296,7 @@ describe('UserResource', () => {
         'x-mongo-cluster-name': 'abc',
       }
 
-      await resource.getUserModel('u-1', headers)
+      await resource.getUserModel(userId('u-1'), headers)
     })
 
     test('throws NotFoundError on 404', async () => {
@@ -308,7 +310,7 @@ describe('UserResource', () => {
 
       const client = createAmigoFetch(mockConfig)
       const resource = new UserResource(client, 'test-org')
-      await expect(resource.getUserModel('missing')).rejects.toThrow(NotFoundError)
+      await expect(resource.getUserModel(userId('missing'))).rejects.toThrow(NotFoundError)
     })
   })
 })

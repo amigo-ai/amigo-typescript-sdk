@@ -1,6 +1,42 @@
 import type { Middleware } from 'openapi-fetch'
 import { isNetworkError, parseResponseBody } from './utils'
 
+/** Fields that may contain sensitive tokens or credentials. */
+const SENSITIVE_FIELDS = new Set([
+  'id_token',
+  'access_token',
+  'refresh_token',
+  'authorization',
+  'api_key',
+  'apikey',
+  'token',
+  'secret',
+  'password',
+  'x-api-key',
+])
+
+/**
+ * Recursively strips sensitive fields from an object to prevent token leakage in error contexts.
+ * Returns a shallow copy with sensitive keys replaced by '[REDACTED]'.
+ */
+export function sanitizeErrorContext(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj !== 'object') return obj
+  if (Array.isArray(obj)) return obj.map(sanitizeErrorContext)
+
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    if (SENSITIVE_FIELDS.has(key.toLowerCase())) {
+      result[key] = '[REDACTED]'
+    } else if (typeof value === 'object' && value !== null) {
+      result[key] = sanitizeErrorContext(value)
+    } else {
+      result[key] = value
+    }
+  }
+  return result
+}
+
 /**
  * Base error class for all Amigo SDK errors.
  * Provides common functionality and error identification.
@@ -38,7 +74,8 @@ export class AmigoError extends Error {
   }
 
   /**
-   * Returns a JSON-serializable representation of the error
+   * Returns a JSON-serializable representation of the error.
+   * Sensitive fields (tokens, keys) are redacted to prevent leakage.
    */
   toJSON(): Record<string, unknown> {
     return {
@@ -46,7 +83,7 @@ export class AmigoError extends Error {
       message: this.message,
       code: this.errorCode,
       statusCode: this.statusCode,
-      context: this.context,
+      context: sanitizeErrorContext(this.context) as Record<string, unknown> | undefined,
       stack: this.stack,
     }
   }
@@ -151,7 +188,7 @@ export function createApiError(response: Response, body?: unknown): AmigoError {
       body && typeof body === 'object' && 'code' in body
         ? (body as Record<string, unknown>).code
         : undefined,
-    response: body,
+    response: sanitizeErrorContext(body),
   }
 
   const error = new ErrorClass(message, options)

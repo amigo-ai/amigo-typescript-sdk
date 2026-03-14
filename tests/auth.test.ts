@@ -2,16 +2,16 @@ import { describe, test, vi, expect, beforeAll, afterAll, afterEach } from 'vite
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { getBearerToken, createAuthMiddleware } from '../src/core/auth'
-import { AmigoSdkConfig } from '../src/index'
-import { AuthenticationError, NetworkError } from '../src/core/errors'
-import { createAmigoFetch } from '../src/core/openapi-client'
+import type { AmigoSdkConfig } from '../src/index'
+import { userId, orgId } from '../src/index'
+import { AuthenticationError } from '../src/core/errors'
 
 // Mock config for testing
 const mockConfig: AmigoSdkConfig = {
   apiKey: 'test-api-key',
   apiKeyId: 'test-api-key-id',
-  userId: 'test-user-id',
-  orgId: 'test-org-id',
+  userId: userId('test-user-id'),
+  orgId: orgId('test-org-id'),
   baseUrl: 'https://api.example.com',
 }
 
@@ -114,6 +114,7 @@ describe('SDK Auth Tests', () => {
       const modifiedRequest = await middleware.onRequest!({
         request: mockRequest,
         params: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       // Verify the Authorization header was added
@@ -152,6 +153,7 @@ describe('SDK Auth Tests', () => {
       await middleware.onRequest!({
         request: mockRequest1,
         params: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       // Add a small delay to ensure token is considered expired
@@ -161,6 +163,7 @@ describe('SDK Auth Tests', () => {
       const modifiedRequest2 = await middleware.onRequest!({
         request: mockRequest2,
         params: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       // Verify fresh token is used
@@ -185,6 +188,7 @@ describe('SDK Auth Tests', () => {
       await middleware.onRequest!({
         request: mockRequest,
         params: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
       expect(authCallCount).toBe(1)
 
@@ -194,6 +198,7 @@ describe('SDK Auth Tests', () => {
         response: mock401Response,
         request: mockRequest,
         params: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       // Next request should fetch token again (token was cleared)
@@ -201,6 +206,7 @@ describe('SDK Auth Tests', () => {
       await middleware.onRequest!({
         request: mockRequest2,
         params: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       expect(authCallCount).toBe(2) // Token should have been re-fetched
