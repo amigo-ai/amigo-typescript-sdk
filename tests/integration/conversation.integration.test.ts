@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, test, expect, beforeAll } from 'vitest'
 import { config as loadEnv } from 'dotenv'
-import { AmigoClient, ConflictError, NotFoundError } from '../../src/index'
+import {
+  AmigoClient,
+  ConflictError,
+  NotFoundError,
+  userId,
+  orgId,
+  conversationId as toConversationId,
+  interactionId as toInteractionId,
+} from '../../src/index'
+import type { ConversationId, InteractionId } from '../../src/core/branded-types'
 
 // Load environment variables from .env file
 loadEnv()
@@ -10,8 +19,8 @@ loadEnv()
 const testConfig = {
   apiKey: process.env.AMIGO_API_KEY || 'test-api-key',
   apiKeyId: process.env.AMIGO_API_KEY_ID || 'test-api-key-id',
-  userId: process.env.AMIGO_USER_ID || 'test-user-id',
-  orgId: process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id',
+  userId: userId(process.env.AMIGO_USER_ID || 'test-user-id'),
+  orgId: orgId(process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id'),
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
   serviceId: process.env.AMIGO_TEST_SERVICE_ID || '6960124e9b05e7710da71baf',
 }
@@ -20,8 +29,8 @@ const testConfig = {
 describe.sequential('Integration - Conversation (Real API)', () => {
   const serviceId = testConfig.serviceId
   let client: AmigoClient
-  let conversationId: string | undefined
-  let interactionId: string | undefined
+  let conversationId: ConversationId | undefined
+  let interactionId: InteractionId | undefined
 
   // Ensure no unfinished conversations exist for this service before starting
   beforeAll(async () => {
@@ -44,7 +53,7 @@ describe.sequential('Integration - Conversation (Real API)', () => {
       })
       for (const c of existing.conversations ?? []) {
         try {
-          await client.conversations.finishConversation({ conversationId: c.id })
+          await client.conversations.finishConversation({ conversationId: toConversationId(c.id) })
         } catch {
           // Ignore best-effort failures (already finished or conflicts)
         }
@@ -76,13 +85,13 @@ describe.sequential('Integration - Conversation (Real API)', () => {
           throw new Error(`error event: ${JSON.stringify(evt)}`)
         }
         if (type === 'conversation-created') {
-          conversationId = (evt as any).conversation_id
+          conversationId = toConversationId((evt as any).conversation_id)
           expect(typeof conversationId).toBe('string')
         } else if (type === 'new-message') {
           sawNewMessage = true
           expect(typeof (evt as any).message).toBe('string')
         } else if (type === 'interaction-complete') {
-          interactionId = (evt as any).interaction_id
+          interactionId = toInteractionId((evt as any).interaction_id)
           expect(typeof interactionId).toBe('string')
           // We have what we need; stop reading the stream to avoid hanging
           break
@@ -131,7 +140,7 @@ describe.sequential('Integration - Conversation (Real API)', () => {
 
     let sawNewMessage = false
     let sawInteractionComplete = false
-    let latestInteractionId: string | undefined
+    let latestInteractionId: InteractionId | undefined
 
     for await (const evt of events) {
       if (evt && typeof evt === 'object' && 'type' in evt) {
@@ -140,7 +149,7 @@ describe.sequential('Integration - Conversation (Real API)', () => {
           sawNewMessage = true
         } else if (type === 'interaction-complete') {
           sawInteractionComplete = true
-          latestInteractionId = (evt as any).interaction_id
+          latestInteractionId = toInteractionId((evt as any).interaction_id)
           // Stop after completion to avoid waiting for server to close stream
           break
         }

@@ -5,7 +5,7 @@ import { setupServer } from 'msw/node'
 import { createAmigoFetch } from '../../src/core/openapi-client'
 import { UserResource } from '../../src/resources/user'
 import { withMockAuth, mockConfig } from '../test-helpers'
-import { userId } from '../../src/core/branded-types'
+import { userId, orgId } from '../../src/core/branded-types'
 import { NotFoundError, ValidationError } from '../../src/core/errors'
 import type { components, operations } from '../../src/generated/api-types'
 
@@ -37,7 +37,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       const result = await resource.getUsers()
 
       expect(result).toEqual(mockResponse as unknown)
@@ -54,7 +54,6 @@ describe('UserResource', () => {
 
             expect(params.getAll('user_id')).toEqual(['u-1', 'u-2'])
             expect(params.getAll('email')).toEqual(['a@example.com'])
-            expect(params.get('is_verified')).toBe('true')
             expect(params.get('limit')).toBe('10')
             expect(params.get('continuation_token')).toBe('5')
             expect(params.getAll('sort_by')).toEqual(['+created_at', '-created_at'])
@@ -65,12 +64,11 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
 
       const query: operations['get-users']['parameters']['query'] = {
         user_id: ['u-1', 'u-2'],
         email: ['a@example.com'],
-        is_verified: true,
         limit: 10,
         continuation_token: 5,
         sort_by: ['+created_at', '-created_at'],
@@ -92,7 +90,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       const headers: operations['get-users']['parameters']['header'] = {
         'x-mongo-cluster-name': 'abc',
       }
@@ -110,7 +108,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'nonexistent-org')
+      const resource = new UserResource(client, orgId('nonexistent-org'))
       await expect(resource.getUsers()).rejects.toThrow(NotFoundError)
     })
   })
@@ -135,7 +133,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
 
       const body: components['schemas']['user__create_invited_user__Request'] = {
         first_name: 'Ada',
@@ -168,7 +166,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
 
       const body: components['schemas']['user__create_invited_user__Request'] = {
         first_name: 'Ada',
@@ -192,7 +190,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       await expect(resource.deleteUser(userId('u-1'))).resolves.toBeUndefined()
     })
 
@@ -206,7 +204,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       await expect(resource.deleteUser(userId('missing'))).rejects.toThrow(NotFoundError)
     })
   })
@@ -227,7 +225,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       const body: components['schemas']['user__update_user_info__Request'] = {
         first_name: 'Grace',
         last_name: 'Hopper',
@@ -255,7 +253,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       const body = { invalidBodyKey: 'abc' }
       await expect(
         resource.updateUser({ userId: userId('u-1'), body: body as any })
@@ -276,7 +274,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       const result = await resource.getUserModel(userId('u-1'))
 
       expect(result).toEqual(mockResponse as unknown)
@@ -295,7 +293,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       const headers: operations['get-user-model']['parameters']['header'] = {
         'x-mongo-cluster-name': 'abc',
       }
@@ -313,7 +311,7 @@ describe('UserResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new UserResource(client, 'test-org')
+      const resource = new UserResource(client, orgId('test-org'))
       await expect(resource.getUserModel(userId('missing'))).rejects.toThrow(NotFoundError)
     })
   })

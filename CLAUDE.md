@@ -31,15 +31,18 @@ src/
     retry.ts            — Exponential backoff with jitter, Retry-After header support
     openapi-client.ts   — Creates openapi-fetch Client with auth + error + retry middleware
     utils.ts            — NDJSON stream parser, response helpers
+    branded-types.ts    — Branded type aliases and constructor functions (OrgId, UserId, ServiceId, AgentId, etc.)
     rate-limit.ts       — RateLimitInfo type, header parsing, callback type
   webhooks/
     types.ts            — Typed interfaces for webhook events (discriminated union)
     parse.ts            — parseWebhookEvent() with HMAC-SHA256 signature verification
     index.ts            — Re-exports
   resources/
+    agent.ts            — Agent CRUD and versioning (createAgent, getAgents, deleteAgent, createAgentVersion, getAgentVersions)
+    context-graph.ts    — Context graph (HSM) CRUD and versioning (createContextGraph, getContextGraphs, deleteContextGraph, createContextGraphVersion, getContextGraphVersions)
     conversation.ts     — Conversations, interactions, NDJSON streaming, message retrieval
     organization.ts     — Organization management
-    services.ts         — Service configuration
+    services.ts         — Service CRUD, version set management (getServices, createService, updateService, upsertVersionSet, deleteVersionSet)
     user.ts             — User operations
   generated/
     api-types.ts        — Auto-generated OpenAPI types (DO NOT EDIT — run `npm run gen-types`)
