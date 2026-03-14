@@ -154,9 +154,28 @@ jobs:
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
-          git add package.json package-lock.json specs/openapi-baseline.json || true
+          git add package.json package-lock.json specs/openapi-baseline.json CHANGELOG.md || true
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
+
+      - name: Update CHANGELOG.md
+        if: ${{ !inputs.dry_run }}
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            ENTRY=$(bash scripts/generate-changelog.sh --from "$PREV_TAG" --version "$NEW_VERSION")
+          else
+            ENTRY=$(bash scripts/generate-changelog.sh --version "$NEW_VERSION")
+          fi
+          if [ -f CHANGELOG.md ]; then
+            # Insert after the first line (title)
+            { head -1 CHANGELOG.md; echo ""; echo "$ENTRY"; tail -n +2 CHANGELOG.md; } > CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+          else
+            { echo "# Changelog"; echo ""; echo "$ENTRY"; } > CHANGELOG.md
+          fi
+          git add CHANGELOG.md
 
       - name: Build release notes
         if: ${{ !inputs.dry_run }}
