@@ -8,6 +8,10 @@ This project follows [Semantic Versioning](https://semver.org/) and the format i
 
 ### Added
 
+- Webhook type safety: typed interfaces for all webhook event types, `parseWebhookEvent()` with HMAC-SHA256 signature verification, replay attack protection (#26)
+- Rate limit header exposure: `RateLimitInfo` type, `parseRateLimitHeaders()` utility (#26)
+- Changelog automation: `scripts/generate-changelog.sh` wired into release workflow (#25)
+- Performance benchmarks: token refresh latency, concurrent request handling (#27)
 - SECURITY.md with responsible disclosure policy
 - CHANGELOG.md
 - CODE_OF_CONDUCT.md
@@ -17,6 +21,9 @@ This project follows [Semantic Versioning](https://semver.org/) and the format i
 
 ### Fixed
 
+- Dependabot alert #10: `diff` package DoS vulnerability in examples (#23)
+- CodeQL workflow conflict with GitHub default setup (#28)
+- esbuild `node:crypto` resolution for neutral platform builds (#26)
 - Abort signal retry test reliability
 
 ## [0.61.0] - 2026-03-14
