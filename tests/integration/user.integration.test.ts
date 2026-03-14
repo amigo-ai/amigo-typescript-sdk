@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, test, expect } from 'vitest'
 import { config as loadEnv } from 'dotenv'
-import { AmigoClient, NotFoundError } from '../../src/index'
+import { AmigoClient, NotFoundError, userId, orgId } from '../../src/index'
+import type { UserId } from '../../src/core/branded-types'
 import type { components } from '../../src/generated/api-types'
 
 // Load environment variables from .env file
@@ -11,8 +12,8 @@ loadEnv()
 const testConfig = {
   apiKey: process.env.AMIGO_API_KEY || 'test-api-key',
   apiKeyId: process.env.AMIGO_API_KEY_ID || 'test-api-key-id',
-  userId: process.env.AMIGO_USER_ID || 'test-user-id',
-  orgId: process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id',
+  userId: userId(process.env.AMIGO_USER_ID || 'test-user-id'),
+  orgId: orgId(process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id'),
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
 }
 
@@ -21,7 +22,7 @@ function createClient(config = testConfig) {
 }
 
 describe.sequential('Integration - User (Real API)', () => {
-  let createdUserId: string | undefined
+  let createdUserId: UserId | undefined
   let createdUserEmail: string | undefined
 
   test('create a test user succeeds and returns created user details', async () => {
@@ -38,7 +39,7 @@ describe.sequential('Integration - User (Real API)', () => {
     const result = await client.users.createUser(body)
     expect(result).toBeDefined()
     expect(typeof result.user_id).toBe('string')
-    createdUserId = result.user_id
+    createdUserId = userId(result.user_id)
     createdUserEmail = email
   })
 
@@ -116,18 +117,18 @@ describe.sequential('Integration - User (Real API)', () => {
       preferred_language: null,
       timezone: null,
     }
-    await expect(client.users.updateUser({ userId: 'non-existent-id', body })).rejects.toThrow(
-      NotFoundError
-    )
+    await expect(
+      client.users.updateUser({ userId: userId('non-existent-id'), body })
+    ).rejects.toThrow(NotFoundError)
   })
 
   test('get users for invalid org returns NotFoundError', async () => {
-    const invalidClient = createClient({ ...testConfig, orgId: 'invalid-org-id-123' })
+    const invalidClient = createClient({ ...testConfig, orgId: orgId('invalid-org-id-123') })
     await expect(invalidClient.users.getUsers()).rejects.toThrow(NotFoundError)
   })
 
   test('delete non-existent user returns NotFoundError', async () => {
     const client = createClient()
-    await expect(client.users.deleteUser('non-existent-id')).rejects.toThrow(NotFoundError)
+    await expect(client.users.deleteUser(userId('non-existent-id'))).rejects.toThrow(NotFoundError)
   })
 })

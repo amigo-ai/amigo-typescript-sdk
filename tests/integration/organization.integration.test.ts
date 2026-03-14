@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { config } from 'dotenv'
-import { AmigoClient, NotFoundError, AuthenticationError } from '../../src/index'
+import { AmigoClient, NotFoundError, AuthenticationError, userId, orgId } from '../../src/index'
 
 // Load environment variables from .env file
 config()
@@ -14,8 +14,8 @@ config()
 const testConfig = {
   apiKey: process.env.AMIGO_API_KEY || 'test-api-key',
   apiKeyId: process.env.AMIGO_API_KEY_ID || 'test-api-key-id',
-  userId: process.env.AMIGO_USER_ID || 'test-user-id',
-  orgId: process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id',
+  userId: userId(process.env.AMIGO_USER_ID || 'test-user-id'),
+  orgId: orgId(process.env.AMIGO_ORGANIZATION_ID || 'valid-org-id'),
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
 }
 
@@ -41,7 +41,7 @@ describe('Integration Tests - Real API', () => {
   test('should throw NotFoundError for invalid organization ID', async () => {
     const invalidConfig = {
       ...testConfig,
-      orgId: 'invalid-org-id-123',
+      orgId: orgId('invalid-org-id-123'),
     }
     client = new AmigoClient(invalidConfig)
 

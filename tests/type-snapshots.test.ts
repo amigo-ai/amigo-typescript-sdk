@@ -16,7 +16,7 @@ function extractTypeNames(content: string): string[] {
   const names: string[] = []
   let match: RegExpExecArray | null
   while ((match = typeRegex.exec(content)) !== null) {
-    names.push(match[1])
+    names.push(match[1]!)
   }
   return names.sort()
 }
@@ -29,8 +29,8 @@ function extractOperationIds(content: string): string[] {
   // Look in the operations section
   const opsSection = content.match(/export\s+interface\s+operations\s*\{([\s\S]*?)^\}/m)
   if (opsSection) {
-    while ((match = opRegex.exec(opsSection[1])) !== null) {
-      ops.push(match[1])
+    while ((match = opRegex.exec(opsSection[1]!)) !== null) {
+      ops.push(match[1]!)
     }
   }
   return ops.sort()

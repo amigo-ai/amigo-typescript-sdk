@@ -5,7 +5,7 @@ import { setupServer } from 'msw/node'
 import { createAmigoFetch } from '../../src/core/openapi-client'
 import { ConversationResource } from '../../src/resources/conversation'
 import { withMockAuth, mockConfig } from '../test-helpers'
-import { conversationId, interactionId, messageId } from '../../src/core/branded-types'
+import { conversationId, interactionId, messageId, orgId } from '../../src/core/branded-types'
 import { NotFoundError, ConflictError } from '../../src/core/errors'
 import type { components } from '../../src/generated/api-types'
 
@@ -58,7 +58,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const events = await resource.createConversation({
         body: {
@@ -111,7 +111,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const events = await resource.createConversation({
         body: {
@@ -140,7 +140,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const controller = new AbortController()
       controller.abort()
@@ -176,7 +176,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       await expect(
         (async () => {
@@ -222,7 +222,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const events = await resource.interactWithConversation({
         conversationId: conversationId('conv-hl-text'),
@@ -256,7 +256,7 @@ describe('ConversationResource', () => {
               const url = new URL(request.url)
               expect(url.searchParams.get('request_format')).toBe('voice')
               expect(url.searchParams.get('response_format')).toBe('text')
-              expect(url.searchParams.get('audio_format')).toBe('mp3')
+
               expect(url.searchParams.get('request_audio_config')).toBe('{"type":"mp3"}')
               return new Response(responseStream, {
                 status: 200,
@@ -268,7 +268,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const audioStream = new ReadableStream<Uint8Array>({
         start(controller) {
@@ -283,7 +283,6 @@ describe('ConversationResource', () => {
         query: {
           request_format: 'voice',
           response_format: 'text',
-          audio_format: 'mp3',
           request_audio_config: { type: 'mp3' },
         },
       })
@@ -320,7 +319,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const events = await resource.interactWithConversation({
         conversationId: conversationId('conv-1'),
@@ -355,7 +354,7 @@ describe('ConversationResource', () => {
               const url = new URL(request.url)
               expect(url.searchParams.get('request_format')).toBe('voice')
               expect(url.searchParams.get('response_format')).toBe('text')
-              expect(url.searchParams.get('audio_format')).toBe('mp3')
+
               expect(url.searchParams.get('request_audio_config')).toBe('{"type":"mp3"}')
               expect(request.headers.get('x-mongo-cluster-name')).toBe('test-cluster')
               return new Response(responseStream, {
@@ -368,7 +367,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       const audioStream = new ReadableStream<Uint8Array>({
         start(controller) {
@@ -383,10 +382,10 @@ describe('ConversationResource', () => {
         query: {
           request_format: 'voice',
           response_format: 'text',
-          audio_format: 'mp3',
           request_audio_config: { type: 'mp3' },
         },
         headers: {
+          'content-type': 'multipart/form-data',
           'x-mongo-cluster-name': 'test-cluster',
         },
       })
@@ -409,7 +408,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const controller = new AbortController()
       controller.abort()
 
@@ -421,7 +420,6 @@ describe('ConversationResource', () => {
             query: {
               request_format: 'voice',
               response_format: 'text',
-              audio_format: 'mp3',
               request_audio_config: { type: 'mp3' },
             },
             signal: controller.signal,
@@ -446,7 +444,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
 
       await expect(
         (async () => {
@@ -456,7 +454,6 @@ describe('ConversationResource', () => {
             query: {
               request_format: 'voice',
               response_format: 'text',
-              audio_format: 'mp3',
               request_audio_config: { type: 'mp3' },
             },
           })
@@ -487,7 +484,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const data = await resource.getConversations({
         service_id: ['svc-1', 'svc-2'],
         is_finished: false,
@@ -507,7 +504,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(resource.getConversations()).rejects.toThrow(NotFoundError)
     })
   })
@@ -532,7 +529,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const data = await resource.getConversationMessages({
         conversationId: conversationId('conv-3'),
         query: {
@@ -553,7 +550,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.getConversationMessages({ conversationId: conversationId('missing') })
       ).rejects.toThrow(NotFoundError)
@@ -570,7 +567,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.finishConversation({ conversationId: conversationId('conv-4') })
       ).resolves.toBeUndefined()
@@ -588,7 +585,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.finishConversation({ conversationId: conversationId('conv-6') })
       ).rejects.toThrow(ConflictError)
@@ -603,7 +600,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.finishConversation({ conversationId: conversationId('missing') })
       ).rejects.toThrow(NotFoundError)
@@ -622,7 +619,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const data = await resource.recommendResponsesForInteraction({
         conversationId: conversationId('conv-7'),
         interactionId: interactionId('int-1'),
@@ -640,7 +637,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.recommendResponsesForInteraction({
           conversationId: conversationId('conv-7'),
@@ -662,7 +659,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const data = await resource.getInteractionInsights({
         conversationId: conversationId('conv-8'),
         interactionId: interactionId('int-2'),
@@ -680,7 +677,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.getInteractionInsights({
           conversationId: conversationId('conv-8'),
@@ -702,7 +699,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const data = await resource.getMessageSource({
         conversationId: conversationId('conv-9'),
         messageId: messageId('msg-1'),
@@ -720,7 +717,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.getMessageSource({
           conversationId: conversationId('conv-9'),
@@ -757,7 +754,7 @@ describe('ConversationResource', () => {
       )
 
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       const data = await resource.generateConversationStarters(
         {
           service_id: 'x',
@@ -786,7 +783,7 @@ describe('ConversationResource', () => {
         )
       )
       const client = createAmigoFetch(mockConfig)
-      const resource = new ConversationResource(client, 'test-org')
+      const resource = new ConversationResource(client, orgId('test-org'))
       await expect(
         resource.generateConversationStarters({
           service_id: 'x',

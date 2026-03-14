@@ -6,6 +6,7 @@ import { createAmigoFetch } from '../../src/core/openapi-client'
 import { NotFoundError } from '../../src/core/errors'
 import type { components } from '../../src/generated/api-types'
 import { mockConfig, withMockAuth } from '../test-helpers'
+import { orgId } from '../../src/core/branded-types'
 
 // Mock organization response
 const mockOrganizationResponse: components['schemas']['organization__get_organization__Response'] =
@@ -46,7 +47,7 @@ describe('OrganizationResource', () => {
     )
 
     const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'test-org')
+    const organizationResource = new OrganizationResource(client, orgId('test-org'))
     const result = await organizationResource.getOrganization()
 
     expect(result).toBeDefined()
@@ -66,7 +67,7 @@ describe('OrganizationResource', () => {
     )
 
     const client = createAmigoFetch(mockConfig)
-    const organizationResource = new OrganizationResource(client, 'nonexistent-org')
+    const organizationResource = new OrganizationResource(client, orgId('nonexistent-org'))
 
     await expect(organizationResource.getOrganization()).rejects.toThrow(NotFoundError)
   })
