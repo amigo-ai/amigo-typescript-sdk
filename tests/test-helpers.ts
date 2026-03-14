@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
-import { AmigoSdkConfig } from '../src/index'
-import { components } from '../src/generated/api-types'
+import type { AmigoSdkConfig } from '../src/index'
+import { userId, orgId } from '../src/index'
 
 /**
  * Standard mock configuration used across tests
@@ -8,8 +8,8 @@ import { components } from '../src/generated/api-types'
 export const mockConfig: AmigoSdkConfig = {
   apiKey: 'test-api-key',
   apiKeyId: 'test-api-key-id',
-  userId: 'test-user-id',
-  orgId: 'test-org-id',
+  userId: userId('test-user-id'),
+  orgId: orgId('test-org-id'),
   baseUrl: 'https://api.example.com',
 }
 

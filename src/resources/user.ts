@@ -1,12 +1,13 @@
 import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
 import type { components, operations } from '../generated/api-types'
+import type { OrgId, UserId } from '../core/branded-types'
 
 /** Resource for managing users in the organization. */
 export class UserResource {
   constructor(
     private c: AmigoFetch,
-    private orgId: string
+    private orgId: OrgId
   ) {}
 
   /** List users in the organization. */
@@ -37,34 +38,34 @@ export class UserResource {
   }
 
   /** Delete a user by ID. */
-  async deleteUser(userId: string, headers?: operations['delete-user']['parameters']['header']) {
-    // DELETE endpoints returns no content (e.g., 204 No Content).
-    // Our middleware already throws on non-2xx responses, so simply await the call.
+  async deleteUser(
+    userId: UserId,
+    headers?: operations['delete-user']['parameters']['header']
+  ): Promise<void> {
     await this.c.DELETE('/v1/{organization}/user/{requested_user_id}', {
       params: { path: { organization: this.orgId, requested_user_id: userId } },
       headers,
     })
-    return
+    return undefined
   }
 
   /** Update user information. */
   async updateUser(
-    userId: string,
+    userId: UserId,
     body: components['schemas']['user__update_user_info__Request'],
     headers?: operations['update-user-info']['parameters']['header']
-  ) {
-    // UPDATE endpoint returns no content (e.g., 204 No Content).
-    // Our middleware already throws on non-2xx responses, so simply await the call.
+  ): Promise<void> {
     await this.c.POST('/v1/{organization}/user/{requested_user_id}', {
       params: { path: { organization: this.orgId, requested_user_id: userId } },
       body,
       headers,
     })
-    return
+    return undefined
   }
 
+  /** Get the user model for a user. */
   async getUserModel(
-    userId: string,
+    userId: UserId,
     headers?: operations['get-user-model']['parameters']['header']
   ) {
     return extractData(
@@ -73,5 +74,43 @@ export class UserResource {
         headers,
       })
     )
+  }
+
+  /** Alias for getUsers. */
+  async list(
+    queryParams?: operations['get-users']['parameters']['query'],
+    headers?: operations['get-users']['parameters']['header']
+  ) {
+    return this.getUsers(queryParams, headers)
+  }
+
+  /** Alias for createUser. */
+  async create(
+    body: components['schemas']['user__create_invited_user__Request'],
+    headers?: operations['create-invited-user']['parameters']['header']
+  ) {
+    return this.createUser(body, headers)
+  }
+
+  /** Alias for getUserModel. */
+  async get(userId: UserId, headers?: operations['get-user-model']['parameters']['header']) {
+    return this.getUserModel(userId, headers)
+  }
+
+  /** Alias for deleteUser. */
+  async delete(
+    userId: UserId,
+    headers?: operations['delete-user']['parameters']['header']
+  ): Promise<void> {
+    return this.deleteUser(userId, headers)
+  }
+
+  /** Alias for updateUser. */
+  async update(
+    userId: UserId,
+    body: components['schemas']['user__update_user_info__Request'],
+    headers?: operations['update-user-info']['parameters']['header']
+  ): Promise<void> {
+    return this.updateUser(userId, body, headers)
   }
 }

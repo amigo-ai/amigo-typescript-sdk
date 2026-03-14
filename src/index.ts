@@ -5,6 +5,7 @@ import { ConversationResource } from './resources/conversation'
 import { ServiceResource } from './resources/services'
 import { UserResource } from './resources/user'
 import type { RetryOptions } from './core/retry'
+import type { UserId, OrgId } from './core/branded-types'
 
 export interface AmigoSdkConfig {
   /** API key from Amigo dashboard */
@@ -12,9 +13,9 @@ export interface AmigoSdkConfig {
   /** API-key ID from Amigo dashboard */
   apiKeyId: string
   /** User ID on whose behalf the request is made */
-  userId: string
+  userId: UserId
   /** The Organization ID */
-  orgId: string
+  orgId: OrgId
   /** Base URL of the Amigo API */
   baseUrl?: string
   /** Retry configuration for HTTP requests */
@@ -70,3 +71,21 @@ export * as errors from './core/errors'
 
 // Re-export useful types for consumers
 export type { components, operations, paths } from './generated/api-types'
+
+// Export branded types and helper functions
+export type {
+  ConversationId,
+  MessageId,
+  UserId,
+  OrgId,
+  InteractionId,
+  ServiceId,
+} from './core/branded-types'
+export {
+  conversationId,
+  messageId,
+  userId,
+  orgId,
+  interactionId,
+  serviceId,
+} from './core/branded-types'

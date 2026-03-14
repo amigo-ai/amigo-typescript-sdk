@@ -2,6 +2,7 @@ import { BadRequestError } from '../core/errors'
 import type { AmigoFetch } from '../core/openapi-client'
 import { extractData, parseNdjsonStream } from '../core/utils'
 import type { components, operations } from '../generated/api-types'
+import type { ConversationId, InteractionId, MessageId, OrgId } from '../core/branded-types'
 
 type VoiceData = Blob | Uint8Array | ReadableStream<Uint8Array>
 export type InteractionInput = string | VoiceData
@@ -15,7 +16,7 @@ type InteractQuerySerialized = Omit<InteractQuery, 'request_audio_config'> & {
 export class ConversationResource {
   constructor(
     private c: AmigoFetch,
-    private orgId: string
+    private orgId: OrgId
   ) {}
 
   /** Create a new conversation and return an async stream of NDJSON events. */
@@ -45,7 +46,7 @@ export class ConversationResource {
 
   /** Send a text or voice interaction and return an async stream of NDJSON events. */
   async interactWithConversation(
-    conversationId: string,
+    conversationId: ConversationId,
     input: InteractionInput,
     queryParams: operations['interact-with-conversation']['parameters']['query'],
     headers?: operations['interact-with-conversation']['parameters']['header'],
@@ -137,9 +138,17 @@ export class ConversationResource {
     )
   }
 
+  /** Alias for getConversations. */
+  async list(
+    queryParams?: operations['get-conversations']['parameters']['query'],
+    headers?: operations['get-conversations']['parameters']['header']
+  ) {
+    return this.getConversations(queryParams, headers)
+  }
+
   /** Get messages for a conversation. */
   async getConversationMessages(
-    conversationId: string,
+    conversationId: ConversationId,
     queryParams?: operations['get-conversation-messages']['parameters']['query'],
     headers?: operations['get-conversation-messages']['parameters']['header']
   ) {
@@ -154,24 +163,27 @@ export class ConversationResource {
     )
   }
 
-  /** Finish (close) a conversation. */
+  /**
+   * Finish (close) a conversation.
+   * @returns void
+   */
   async finishConversation(
-    conversationId: string,
+    conversationId: ConversationId,
     headers?: operations['finish-conversation']['parameters']['header']
-  ) {
+  ): Promise<void> {
     await this.c.POST('/v1/{organization}/conversation/{conversation_id}/finish/', {
       params: { path: { organization: this.orgId, conversation_id: conversationId } },
       headers,
       // No content is expected; parse as text to access raw Response
       parseAs: 'text',
     })
-    return
+    return undefined
   }
 
   /** Get recommended responses for an interaction. */
   async recommendResponsesForInteraction(
-    conversationId: string,
-    interactionId: string,
+    conversationId: ConversationId,
+    interactionId: InteractionId,
     body?: { context?: string },
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
   ) {
@@ -195,8 +207,8 @@ export class ConversationResource {
 
   /** Get insights for an interaction. */
   async getInteractionInsights(
-    conversationId: string,
-    interactionId: string,
+    conversationId: ConversationId,
+    interactionId: InteractionId,
     headers?: operations['get-interaction-insights']['parameters']['header']
   ) {
     return extractData(
@@ -218,8 +230,8 @@ export class ConversationResource {
 
   /** Get the audio/media source URL for a message. */
   async getMessageSource(
-    conversationId: string,
-    messageId: string,
+    conversationId: ConversationId,
+    messageId: MessageId,
     headers?: operations['retrieve-message-source']['parameters']['header']
   ) {
     return extractData(

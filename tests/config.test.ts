@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest'
-import { AmigoClient, AmigoSdkConfig } from '../src/index'
+import type { AmigoSdkConfig } from '../src/index'
+import { AmigoClient, userId, orgId } from '../src/index'
 import { ConfigurationError } from '../src/core/errors'
 
 describe('AmigoClient Configuration', () => {
   const validConfig: AmigoSdkConfig = {
     apiKey: 'test-api-key',
     apiKeyId: 'test-api-key-id',
-    userId: 'test-user-id',
-    orgId: 'test-org-id',
+    userId: userId('test-user-id'),
+    orgId: orgId('test-org-id'),
   }
 
   describe('Configuration Validation', () => {
@@ -52,7 +54,7 @@ describe('AmigoClient Configuration', () => {
     })
 
     it('should throw ConfigurationError when userId is empty string', () => {
-      const invalidConfig = { ...validConfig, userId: '' }
+      const invalidConfig = { ...validConfig, userId: userId('') }
 
       expect(() => new AmigoClient(invalidConfig)).toThrow(ConfigurationError)
       expect(() => new AmigoClient(invalidConfig)).toThrow('User ID is required')
@@ -69,7 +71,7 @@ describe('AmigoClient Configuration', () => {
     })
 
     it('should throw ConfigurationError when orgId is empty string', () => {
-      const invalidConfig = { ...validConfig, orgId: '' }
+      const invalidConfig = { ...validConfig, orgId: orgId('') }
 
       expect(() => new AmigoClient(invalidConfig)).toThrow(ConfigurationError)
       expect(() => new AmigoClient(invalidConfig)).toThrow('Organization ID is required')
