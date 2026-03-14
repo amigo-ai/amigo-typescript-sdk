@@ -2,12 +2,14 @@ import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
 import type { components, operations } from '../generated/api-types'
 
+/** Resource for managing users in the organization. */
 export class UserResource {
   constructor(
     private c: AmigoFetch,
     private orgId: string
   ) {}
 
+  /** List users in the organization. */
   async getUsers(
     queryParams?: operations['get-users']['parameters']['query'],
     headers?: operations['get-users']['parameters']['header']
@@ -20,6 +22,7 @@ export class UserResource {
     )
   }
 
+  /** Create (invite) a new user to the organization. */
   async createUser(
     body: components['schemas']['user__create_invited_user__Request'],
     headers?: operations['create-invited-user']['parameters']['header']
@@ -33,6 +36,7 @@ export class UserResource {
     )
   }
 
+  /** Delete a user by ID. */
   async deleteUser(userId: string, headers?: operations['delete-user']['parameters']['header']) {
     // DELETE endpoints returns no content (e.g., 204 No Content).
     // Our middleware already throws on non-2xx responses, so simply await the call.
@@ -43,6 +47,7 @@ export class UserResource {
     return
   }
 
+  /** Update user information. */
   async updateUser(
     userId: string,
     body: components['schemas']['user__update_user_info__Request'],

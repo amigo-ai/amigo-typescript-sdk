@@ -139,6 +139,32 @@ try {
 }
 ```
 
+## Troubleshooting
+
+### Authentication errors
+
+- **`AuthenticationError: Authentication failed`**: Verify your `apiKey` and `apiKeyId` are correct and haven't been revoked. Regenerate them from the Amigo dashboard if needed.
+- **Token refresh failures**: The SDK refreshes tokens automatically 5 minutes before expiry. If this persists, check that your system clock is accurate.
+
+### Configuration issues
+
+- **`ConfigurationError`**: Ensure all required fields (`apiKey`, `apiKeyId`, `userId`, `orgId`) are provided when constructing `AmigoClient`.
+
+### Connection issues
+
+- **`NetworkError` or timeouts**: Check your network connectivity and that `https://api.amigo.ai` is reachable. If behind a corporate proxy, configure your environment's proxy settings.
+- **`RateLimitError`**: The SDK retries automatically on 429 responses with `Retry-After` headers. If you consistently hit rate limits, reduce request frequency or contact support.
+
+### TypeScript / import issues
+
+- **`Cannot find module '@amigo-ai/sdk'`**: Ensure the package is installed: `npm install @amigo-ai/sdk`.
+- **Type errors with generated types**: Update to the latest SDK version (`npm install @amigo-ai/sdk@latest`) — types are regenerated from the OpenAPI spec on each release.
+- **ESM/CJS import issues**: The SDK supports both. Use `import { AmigoClient } from '@amigo-ai/sdk'` for ESM or `const { AmigoClient } = require('@amigo-ai/sdk')` for CJS. Ensure your `tsconfig.json` has compatible `moduleResolution` settings.
+
+### Streaming issues
+
+- **NDJSON stream not yielding events**: Ensure you're using `for await` to consume the async generator returned by `createConversation` and `interactWithConversation`.
+
 ## Documentation
 
 - **Developer Guide**: [https://docs.amigo.ai/developer-guide](https://docs.amigo.ai/developer-guide)

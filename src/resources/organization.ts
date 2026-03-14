@@ -2,6 +2,7 @@ import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
 import type { operations } from '../generated/api-types'
 
+/** Resource for retrieving organization details. */
 export class OrganizationResource {
   constructor(
     private c: AmigoFetch,

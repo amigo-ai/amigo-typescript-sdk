@@ -2,6 +2,7 @@ import type { AmigoFetch } from '../core/openapi-client'
 import { extractData } from '../core/utils'
 import type { operations } from '../generated/api-types'
 
+/** Resource for retrieving available services. */
 export class ServiceResource {
   constructor(
     private c: AmigoFetch,
