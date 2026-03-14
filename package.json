@@ -1,6 +1,6 @@
 {
   "name": "@amigo-ai/sdk",
-  "version": "0.61.0",
+  "version": "0.100.0",
   "description": "Amigo TypeScript SDK",
   "publishConfig": {
     "access": "public"
@@ -14,6 +14,7 @@
   "scripts": {
     "gen-types": "node scripts/gen.mjs",
     "test": "vitest run --project unit",
+    "test:dist": "vitest run --project dist",
     "test:integration": "vitest run --project integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --project unit",

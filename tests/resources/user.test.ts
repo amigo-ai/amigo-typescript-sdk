@@ -256,4 +256,59 @@ describe('UserResource', () => {
       await expect(resource.updateUser('u-1', body as any)).rejects.toThrow(ValidationError)
     })
   })
+
+  describe('getUserModel', () => {
+    test('returns user model data on success', async () => {
+      const mockResponse = { user_models: [], additional_context: [] }
+
+      server.use(
+        ...withMockAuth(
+          http.get('https://api.example.com/v1/test-org/user/u-1/user_model', () => {
+            return HttpResponse.json(mockResponse)
+          })
+        )
+      )
+
+      const client = createAmigoFetch(mockConfig)
+      const resource = new UserResource(client, 'test-org')
+      const result = await resource.getUserModel('u-1')
+
+      expect(result).toEqual(mockResponse as unknown)
+    })
+
+    test('accepts and forwards headers', async () => {
+      const mockResponse = { user_models: [], additional_context: [] }
+
+      server.use(
+        ...withMockAuth(
+          http.get('https://api.example.com/v1/test-org/user/u-1/user_model', ({ request }) => {
+            expect(request.headers.get('x-mongo-cluster-name')).toBe('abc')
+            return HttpResponse.json(mockResponse)
+          })
+        )
+      )
+
+      const client = createAmigoFetch(mockConfig)
+      const resource = new UserResource(client, 'test-org')
+      const headers: operations['get-user-model']['parameters']['header'] = {
+        'x-mongo-cluster-name': 'abc',
+      }
+
+      await resource.getUserModel('u-1', headers)
+    })
+
+    test('throws NotFoundError on 404', async () => {
+      server.use(
+        ...withMockAuth(
+          http.get('https://api.example.com/v1/test-org/user/missing/user_model', () => {
+            return HttpResponse.json(null, { status: 404, statusText: 'Not Found' })
+          })
+        )
+      )
+
+      const client = createAmigoFetch(mockConfig)
+      const resource = new UserResource(client, 'test-org')
+      await expect(resource.getUserModel('missing')).rejects.toThrow(NotFoundError)
+    })
+  })
 })

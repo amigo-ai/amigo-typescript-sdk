@@ -65,8 +65,8 @@ export class ConversationResource {
         throw new BadRequestError("textMessage is required when request_format is 'text'")
       }
       const form = new FormData()
-      const blob = new Blob([input], { type: 'text/plain; charset=utf-8' })
-      form.append('recorded_message', blob, 'message.txt')
+      form.append('initial_message_type', 'user-message')
+      form.append('recorded_message', input)
       bodyToSend = form
     } else if (queryParams.request_format === 'voice') {
       if (typeof input === 'string') {
@@ -113,7 +113,8 @@ export class ConversationResource {
         query: normalizedQuery as unknown as InteractQuery,
         header: headersToSend,
       },
-      body: bodyToSend,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      body: bodyToSend as any, // FormData/Blob not represented in generated OpenAPI types
       parseAs: 'stream',
       ...(options?.signal && { signal: options.signal }),
     })
@@ -171,10 +172,11 @@ export class ConversationResource {
   async recommendResponsesForInteraction(
     conversationId: string,
     interactionId: string,
+    body?: { context?: string },
     headers?: operations['recommend-responses-for-interaction']['parameters']['header']
   ) {
     return extractData(
-      this.c.GET(
+      this.c.POST(
         '/v1/{organization}/conversation/{conversation_id}/interaction/{interaction_id}/recommend_responses',
         {
           params: {
@@ -184,6 +186,7 @@ export class ConversationResource {
               interaction_id: interactionId,
             },
           },
+          body,
           headers,
         }
       )

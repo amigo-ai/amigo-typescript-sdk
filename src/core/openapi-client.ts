@@ -1,5 +1,14 @@
-import createClient, { type Client } from 'openapi-fetch'
+import type { Client } from 'openapi-fetch'
+import openapiFetchImport from 'openapi-fetch'
 import { createErrorMiddleware } from './errors'
+
+// Handle ESM/CJS interop: esbuild's __toESM wrapper can cause the default
+// import to be the module object ({ default: fn }) instead of the function directly.
+// This normalizes access to work in both environments.
+const createClient: typeof openapiFetchImport =
+  typeof openapiFetchImport === 'function'
+    ? openapiFetchImport
+    : (openapiFetchImport as unknown as { default: typeof openapiFetchImport }).default
 import { createAuthMiddleware } from './auth'
 import type { paths } from '../generated/api-types'
 import type { AmigoSdkConfig } from '..'
