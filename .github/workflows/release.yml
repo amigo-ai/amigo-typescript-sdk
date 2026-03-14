@@ -38,6 +38,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   # Reuse the existing test workflow
@@ -140,17 +141,10 @@ jobs:
 
       - name: Publish to npm
         if: ${{ !inputs.dry_run }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "🔄 Publishing to npm..."
           FILE="${{ steps.pack.outputs.file }}"
-          ACCESS_FLAG="--access public"
-          PROV_FLAG=""
-          if [ "${{ github.repository_visibility }}" = "public" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" ]; then
-            PROV_FLAG="--provenance"
-          fi
-          npm publish "$FILE" $PROV_FLAG $ACCESS_FLAG
+          npm publish "$FILE" --provenance --access public
           echo "✅ Package published to npm"
 
       - name: Commit version bump
