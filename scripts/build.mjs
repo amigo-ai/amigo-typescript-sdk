@@ -10,7 +10,7 @@ const shared = {
   target: 'es2020',
   minify: false,
   sourcemap: true,
-  external: ['openapi-fetch'], // keep small, let consumer install once
+  external: ['openapi-fetch', 'node:crypto'], // keep small, let consumer install once
 }
 
 // ESM build

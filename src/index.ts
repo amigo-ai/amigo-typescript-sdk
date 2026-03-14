@@ -69,6 +69,13 @@ function validateConfig(config: AmigoSdkConfig) {
 // Export all errors as a namespace to avoid polluting the main import space
 export * as errors from './core/errors'
 
+// Export webhook types and helpers
+export * as webhooks from './webhooks'
+
+// Export rate limit types
+export type { RateLimitInfo, RateLimitCallback } from './core/rate-limit'
+export { parseRateLimitHeaders } from './core/rate-limit'
+
 // Re-export useful types for consumers
 export type { components, operations, paths } from './generated/api-types'
 
