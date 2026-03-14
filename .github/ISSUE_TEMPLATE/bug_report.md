@@ -1,9 +1,9 @@
 ---
 name: Bug Report
 about: Report a bug in the Amigo TypeScript SDK
-title: "[Bug] "
+title: '[Bug] '
 labels: bug
-assignees: ""
+assignees: ''
 ---
 
 ## Description

@@ -4,6 +4,8 @@ import { OrganizationResource } from './resources/organization'
 import { ConversationResource } from './resources/conversation'
 import { ServiceResource } from './resources/services'
 import { UserResource } from './resources/user'
+import { AgentResource } from './resources/agent'
+import { ContextGraphResource } from './resources/context-graph'
 import type { RetryOptions } from './core/retry'
 import type { UserId, OrgId } from './core/branded-types'
 
@@ -33,6 +35,8 @@ export class AmigoClient {
   readonly conversations: ConversationResource
   readonly services: ServiceResource
   readonly users: UserResource
+  readonly agents: AgentResource
+  readonly contextGraphs: ContextGraphResource
   readonly config: AmigoSdkConfig
 
   /** Create a new Amigo client with the given configuration. */
@@ -44,6 +48,8 @@ export class AmigoClient {
     this.conversations = new ConversationResource(api, this.config.orgId)
     this.services = new ServiceResource(api, this.config.orgId)
     this.users = new UserResource(api, this.config.orgId)
+    this.agents = new AgentResource(api, this.config.orgId)
+    this.contextGraphs = new ContextGraphResource(api, this.config.orgId)
   }
 }
 
@@ -66,8 +72,23 @@ function validateConfig(config: AmigoSdkConfig) {
   return config
 }
 
-// Export all errors as a namespace to avoid polluting the main import space
-export * as errors from './core/errors'
+// Export error classes individually (not as namespace)
+export {
+  AmigoError,
+  BadRequestError,
+  AuthenticationError,
+  PermissionError,
+  NotFoundError,
+  ConflictError,
+  RateLimitError,
+  ServerError,
+  ServiceUnavailableError,
+  ConfigurationError,
+  ValidationError,
+  NetworkError,
+  ParseError,
+  isAmigoError,
+} from './core/errors'
 
 // Export webhook types and helpers
 export * as webhooks from './webhooks'
@@ -75,6 +96,10 @@ export * as webhooks from './webhooks'
 // Export rate limit types
 export type { RateLimitInfo, RateLimitCallback } from './core/rate-limit'
 export { parseRateLimitHeaders } from './core/rate-limit'
+
+// Export retry and interaction types
+export type { RetryOptions } from './core/retry'
+export type { InteractionInput } from './resources/conversation'
 
 // Re-export useful types for consumers
 export type { components, operations, paths } from './generated/api-types'
@@ -87,6 +112,17 @@ export type {
   OrgId,
   InteractionId,
   ServiceId,
+  AgentId,
+  ToolId,
+  DynamicBehaviorSetId,
+  MetricId,
+  SimulationPersonaId,
+  SimulationScenarioId,
+  SimulationUnitTestId,
+  SimulationUnitTestSetId,
+  WebhookDestinationId,
+  RoleId,
+  ApiKeyId,
 } from './core/branded-types'
 export {
   conversationId,
@@ -95,4 +131,15 @@ export {
   orgId,
   interactionId,
   serviceId,
+  agentId,
+  toolId,
+  dynamicBehaviorSetId,
+  metricId,
+  simulationPersonaId,
+  simulationScenarioId,
+  simulationUnitTestId,
+  simulationUnitTestSetId,
+  webhookDestinationId,
+  roleId,
+  apiKeyId,
 } from './core/branded-types'

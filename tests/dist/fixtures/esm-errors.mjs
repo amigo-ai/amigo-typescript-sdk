@@ -1,10 +1,10 @@
 /**
  * ESM test: Verify error classes can be instantiated and used
  */
-import { errors } from '../../../dist/index.mjs'
+import { AmigoError, isAmigoError } from '../../../dist/index.mjs'
 
 // Test error instantiation
-const err = new errors.AmigoError('test message')
+const err = new AmigoError('test message')
 if (!(err instanceof Error)) {
   throw new Error('AmigoError should be instanceof Error')
 }
@@ -13,10 +13,10 @@ if (err.message !== 'test message') {
 }
 
 // Test error type checking
-if (!errors.isAmigoError(err)) {
+if (!isAmigoError(err)) {
   throw new Error('isAmigoError should return true for AmigoError')
 }
-if (errors.isAmigoError(new Error('plain'))) {
+if (isAmigoError(new Error('plain'))) {
   throw new Error('isAmigoError should return false for plain Error')
 }
 

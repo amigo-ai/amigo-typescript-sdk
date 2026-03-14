@@ -19,7 +19,9 @@ async function bench() {
   }
   console.log('Token Refresh Latency:')
   console.log(`  Cold start: ${times[0].toFixed(1)}ms`)
-  console.log(`  Avg (warm): ${(times.slice(1).reduce((a, b) => a + b, 0) / (times.length - 1)).toFixed(1)}ms`)
+  console.log(
+    `  Avg (warm): ${(times.slice(1).reduce((a, b) => a + b, 0) / (times.length - 1)).toFixed(1)}ms`
+  )
   console.log(`  Min: ${Math.min(...times).toFixed(1)}ms`)
   console.log(`  Max: ${Math.max(...times).toFixed(1)}ms`)
 }

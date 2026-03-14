@@ -50,11 +50,12 @@ export class UserResource {
   }
 
   /** Update user information. */
-  async updateUser(
-    userId: UserId,
-    body: components['schemas']['user__update_user_info__Request'],
+  async updateUser(options: {
+    userId: UserId
+    body: components['schemas']['user__update_user_info__Request']
     headers?: operations['update-user-info']['parameters']['header']
-  ): Promise<void> {
+  }): Promise<void> {
+    const { userId, body, headers } = options
     await this.c.POST('/v1/{organization}/user/{requested_user_id}', {
       params: { path: { organization: this.orgId, requested_user_id: userId } },
       body,
@@ -76,6 +77,8 @@ export class UserResource {
     )
   }
 
+  // --- Convenience aliases ---
+
   /** Alias for getUsers. */
   async list(
     queryParams?: operations['get-users']['parameters']['query'],
@@ -93,7 +96,7 @@ export class UserResource {
   }
 
   /** Alias for getUserModel. */
-  async get(userId: UserId, headers?: operations['get-user-model']['parameters']['header']) {
+  async getModel(userId: UserId, headers?: operations['get-user-model']['parameters']['header']) {
     return this.getUserModel(userId, headers)
   }
 
@@ -106,11 +109,7 @@ export class UserResource {
   }
 
   /** Alias for updateUser. */
-  async update(
-    userId: UserId,
-    body: components['schemas']['user__update_user_info__Request'],
-    headers?: operations['update-user-info']['parameters']['header']
-  ): Promise<void> {
-    return this.updateUser(userId, body, headers)
+  async update(options: Parameters<UserResource['updateUser']>[0]): Promise<void> {
+    return this.updateUser(options)
   }
 }

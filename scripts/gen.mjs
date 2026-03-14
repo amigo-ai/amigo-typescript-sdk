@@ -78,7 +78,9 @@ for (const [path, methods] of Object.entries(schema.paths || {})) {
     const key = op.operationId
     if (seenOperationIds.has(key)) {
       const newId = `${key}-${method}`
-      console.warn(`⚠️  Fixing duplicate operationId: ${key} -> ${newId} (${method.toUpperCase()} ${path})`)
+      console.warn(
+        `⚠️  Fixing duplicate operationId: ${key} -> ${newId} (${method.toUpperCase()} ${path})`
+      )
       op.operationId = newId
       duplicateFixCount++
     } else {

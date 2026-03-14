@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, test, expect, beforeAll } from 'vitest'
 import { config as loadEnv } from 'dotenv'
-import { AmigoClient, errors } from '../../src/index'
+import { AmigoClient, ConflictError, NotFoundError } from '../../src/index'
 
 // Load environment variables from .env file
 loadEnv()
@@ -43,7 +44,7 @@ describe.sequential('Integration - Conversation (Real API)', () => {
       })
       for (const c of existing.conversations ?? []) {
         try {
-          await client.conversations.finishConversation(c.id)
+          await client.conversations.finishConversation({ conversationId: c.id })
         } catch {
           // Ignore best-effort failures (already finished or conflicts)
         }
@@ -59,12 +60,12 @@ describe.sequential('Integration - Conversation (Real API)', () => {
   test('create conversation streams events and returns 201 with ids', async () => {
     client = new AmigoClient(testConfig)
 
-    const events = await client.conversations.createConversation(
-      {
+    const events = await client.conversations.createConversation({
+      body: {
         service_id: serviceId,
       },
-      { response_format: 'text' }
-    )
+      query: { response_format: 'text' },
+    })
 
     let sawNewMessage = false
 
@@ -99,10 +100,10 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(interactionId).toBeDefined()
     client = new AmigoClient(testConfig)
 
-    const recommendations = await client.conversations.recommendResponsesForInteraction(
-      conversationId!,
-      interactionId!
-    )
+    const recommendations = await client.conversations.recommendResponsesForInteraction({
+      conversationId: conversationId!,
+      interactionId: interactionId!,
+    })
 
     expect(recommendations).toBeDefined()
     expect(Array.isArray(recommendations.recommended_responses)).toBe(true)
@@ -122,11 +123,11 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(conversationId).toBeDefined()
     client = new AmigoClient(testConfig)
 
-    const events = await client.conversations.interactWithConversation(
-      conversationId!,
-      "Hello, I'm sending a text message from the TypeScriptSDK!",
-      { request_format: 'text', response_format: 'text' }
-    )
+    const events = await client.conversations.interactWithConversation({
+      conversationId: conversationId!,
+      input: "Hello, I'm sending a text message from the TypeScriptSDK!",
+      query: { request_format: 'text', response_format: 'text' },
+    })
 
     let sawNewMessage = false
     let sawInteractionComplete = false
@@ -157,9 +158,12 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(conversationId).toBeDefined()
     client = new AmigoClient(testConfig)
 
-    const page1 = await client.conversations.getConversationMessages(conversationId!, {
-      limit: 1,
-      sort_by: ['+created_at'],
+    const page1 = await client.conversations.getConversationMessages({
+      conversationId: conversationId!,
+      query: {
+        limit: 1,
+        sort_by: ['+created_at'],
+      },
     })
     expect(page1).toBeDefined()
     expect(Array.isArray(page1.messages)).toBe(true)
@@ -167,10 +171,13 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(typeof page1.has_more).toBe('boolean')
     if (page1.has_more) {
       expect(page1.continuation_token).not.toBeNull()
-      const page2 = await client.conversations.getConversationMessages(conversationId!, {
-        limit: 1,
-        continuation_token: page1.continuation_token ?? undefined,
-        sort_by: ['+created_at'],
+      const page2 = await client.conversations.getConversationMessages({
+        conversationId: conversationId!,
+        query: {
+          limit: 1,
+          continuation_token: page1.continuation_token ?? undefined,
+          sort_by: ['+created_at'],
+        },
       })
       expect(page2).toBeDefined()
       expect(Array.isArray(page2.messages)).toBe(true)
@@ -183,10 +190,10 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(interactionId).toBeDefined()
     client = new AmigoClient(testConfig)
 
-    const insights = await client.conversations.getInteractionInsights(
-      conversationId!,
-      interactionId!
-    )
+    const insights = await client.conversations.getInteractionInsights({
+      conversationId: conversationId!,
+      interactionId: interactionId!,
+    })
     expect(insights).toBeDefined()
     expect(typeof insights.current_state_name).toBe('string')
   })
@@ -195,10 +202,10 @@ describe.sequential('Integration - Conversation (Real API)', () => {
     expect(conversationId).toBeDefined()
     client = new AmigoClient(testConfig)
     try {
-      await client.conversations.finishConversation(conversationId!)
+      await client.conversations.finishConversation({ conversationId: conversationId! })
     } catch (e) {
       // If the conversation was already auto-completed or not found due to eventual consistency
-      expect(e instanceof errors.ConflictError || e instanceof errors.NotFoundError).toBe(true)
+      expect(e instanceof ConflictError || e instanceof NotFoundError).toBe(true)
     }
   })
 })

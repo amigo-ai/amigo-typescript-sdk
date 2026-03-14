@@ -42,22 +42,19 @@ export function sanitizeErrorContext(obj: unknown): unknown {
  * Provides common functionality and error identification.
  */
 export class AmigoError extends Error {
-  /**
-   * Unique error code for programmatic error handling
-   */
+  /** Unique error code for programmatic error handling */
   readonly errorCode?: string
 
-  /**
-   * HTTP status code if applicable
-   */
+  /** HTTP status code if applicable */
   readonly statusCode?: number
 
-  /**
-   * Additional context data
-   */
-  context?: Record<string, unknown>
+  /** Additional context data */
+  readonly context?: Record<string, unknown>
 
-  constructor(message: string, options?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    options?: { statusCode?: number; errorCode?: string; context?: Record<string, unknown> }
+  ) {
     super(message)
     this.name = this.constructor.name
 
@@ -69,8 +66,9 @@ export class AmigoError extends Error {
       Error.captureStackTrace(this, this.constructor)
     }
 
-    // copies status, code, etc.
-    Object.assign(this, options)
+    this.statusCode = options?.statusCode
+    this.errorCode = options?.errorCode
+    this.context = options?.context
   }
 
   /**
@@ -105,10 +103,9 @@ export class ServiceUnavailableError extends ServerError {}
 export class ConfigurationError extends AmigoError {
   constructor(
     message: string,
-    public field?: string
+    public readonly field?: string
   ) {
-    super(message)
-    this.context = { field }
+    super(message, { context: { field } })
   }
 }
 
@@ -132,8 +129,7 @@ export class NetworkError extends AmigoError {
       method?: string
     }
   ) {
-    super(message, { cause: originalError })
-    this.context = { request }
+    super(message, { context: { request } })
   }
 }
 
@@ -144,8 +140,7 @@ export class ParseError extends AmigoError {
     public readonly parseType: 'json' | 'response' | 'other',
     public readonly originalError?: Error
   ) {
-    super(message, { cause: originalError })
-    this.context = { parseType }
+    super(message, { context: { parseType } })
   }
 }
 
@@ -182,16 +177,14 @@ export function createApiError(response: Response, body?: unknown): AmigoError {
     }
   }
 
-  const options = {
-    status: response.status,
-    code:
+  const error = new ErrorClass(message, {
+    statusCode: response.status,
+    errorCode:
       body && typeof body === 'object' && 'code' in body
-        ? (body as Record<string, unknown>).code
+        ? String((body as Record<string, unknown>).code)
         : undefined,
-    response: sanitizeErrorContext(body),
-  }
-
-  const error = new ErrorClass(message, options)
+    context: { response: sanitizeErrorContext(body) },
+  })
 
   return error
 }

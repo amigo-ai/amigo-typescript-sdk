@@ -237,7 +237,9 @@ describe('UserResource', () => {
       const headers: operations['update-user-info']['parameters']['header'] = {
         'x-mongo-cluster-name': 'xyz',
       }
-      await expect(resource.updateUser(userId('u-1'), body, headers)).resolves.toBeUndefined()
+      await expect(
+        resource.updateUser({ userId: userId('u-1'), body, headers })
+      ).resolves.toBeUndefined()
     })
 
     test('throws ValidationError on 422', async () => {
@@ -255,7 +257,9 @@ describe('UserResource', () => {
       const client = createAmigoFetch(mockConfig)
       const resource = new UserResource(client, 'test-org')
       const body = { invalidBodyKey: 'abc' }
-      await expect(resource.updateUser(userId('u-1'), body as any)).rejects.toThrow(ValidationError)
+      await expect(
+        resource.updateUser({ userId: userId('u-1'), body: body as any })
+      ).rejects.toThrow(ValidationError)
     })
   })
 

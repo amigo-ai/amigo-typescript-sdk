@@ -11,7 +11,14 @@
 // - Run: npm run start --silent  (or: npx tsx conversation/conversation-events.ts)
 
 import 'dotenv/config'
-import { AmigoClient, errors, type AmigoSdkConfig, components } from '@amigo-ai/sdk'
+import {
+  AmigoClient,
+  AmigoError,
+  ConflictError,
+  NotFoundError,
+  type AmigoSdkConfig,
+  components,
+} from '@amigo-ai/sdk'
 
 type CreateEvents = components['schemas']['conversation__create_conversation__Response']
 type InteractEvents = components['schemas']['conversation__interact_with_conversation__Response']
@@ -114,12 +121,11 @@ async function run(): Promise<void> {
   try {
     console.log('\nCreating conversation and handling streamed events...')
 
-    const createEvents = await client.conversations.createConversation(
-      { service_id: serviceId, service_version_set_name: 'release' },
-      { response_format: 'text' },
-      undefined,
-      { signal: createSignal }
-    )
+    const createEvents = await client.conversations.createConversation({
+      body: { service_id: serviceId, service_version_set_name: 'release' },
+      query: { response_format: 'text' },
+      signal: createSignal,
+    })
 
     let conversationId: string | undefined
     let initialInteractionId: string | undefined
@@ -161,13 +167,12 @@ async function run(): Promise<void> {
     const interactTimeout = new TimeoutManager(25_000)
     const interactAbort = interactTimeout.start()
     const { signal: interactSignal } = interactAbort
-    const interactionEvents = await client.conversations.interactWithConversation(
+    const interactionEvents = await client.conversations.interactWithConversation({
       conversationId,
-      'Hello from the events example! Please tell me a fun fact about otters.',
-      { request_format: 'text', response_format: 'text' },
-      undefined,
-      { signal: interactSignal }
-    )
+      input: 'Hello from the events example! Please tell me a fun fact about otters.',
+      query: { request_format: 'text', response_format: 'text' },
+      signal: interactSignal,
+    })
 
     let fullResponse = ''
     let latestInteractionId: string | undefined
@@ -199,9 +204,12 @@ async function run(): Promise<void> {
 
     // Retrieve recent messages
     console.log('\nFetching recent messages...')
-    const messagesPage = await client.conversations.getConversationMessages(conversationId, {
-      limit: 10,
-      sort_by: ['+created_at'],
+    const messagesPage = await client.conversations.getConversationMessages({
+      conversationId,
+      query: {
+        limit: 10,
+        sort_by: ['+created_at'],
+      },
     })
     for (const m of messagesPage.messages ?? []) {
       console.log('[message]', m)
@@ -210,10 +218,10 @@ async function run(): Promise<void> {
     // Finish the conversation gracefully
     console.log('\nFinishing conversation...')
     try {
-      await client.conversations.finishConversation(conversationId)
+      await client.conversations.finishConversation({ conversationId })
       console.log('Conversation finished.')
     } catch (e) {
-      if (e instanceof errors.ConflictError || e instanceof errors.NotFoundError) {
+      if (e instanceof ConflictError || e instanceof NotFoundError) {
         console.warn(`Finish conversation warning: ${e.name} - ${e.message}`)
       } else {
         throw e
@@ -224,7 +232,7 @@ async function run(): Promise<void> {
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
       console.error('Request aborted (timeout or manual):', err.message)
-    } else if (err instanceof errors.AmigoError) {
+    } else if (err instanceof AmigoError) {
       console.error(err)
     } else {
       console.error('Unexpected error:', err)

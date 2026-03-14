@@ -26,9 +26,11 @@ async function benchConcurrent(n: number, token: string) {
     )
   )
   const elapsed = performance.now() - start
-  const ok = results.filter((r) => r.status === 'fulfilled').length
+  const ok = results.filter(r => r.status === 'fulfilled').length
   const failed = n - ok
-  console.log(`  ${n} parallel: ${elapsed.toFixed(0)}ms (${ok} ok, ${failed} failed, ${(n / (elapsed / 1000)).toFixed(1)} req/s)`)
+  console.log(
+    `  ${n} parallel: ${elapsed.toFixed(0)}ms (${ok} ok, ${failed} failed, ${(n / (elapsed / 1000)).toFixed(1)} req/s)`
+  )
 }
 
 async function main() {
