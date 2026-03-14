@@ -24,7 +24,23 @@
     "format:write": "prettier --write .",
     "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings 0",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
-    "pack:local": "npm run build && rm -rf artifacts && mkdir -p artifacts && TARBALL=$(npm pack) && mv \"$TARBALL\" artifacts/ && echo Packed: artifacts/$TARBALL"
+    "pack:local": "npm run build && rm -rf artifacts && mkdir -p artifacts && TARBALL=$(npm pack) && mv \"$TARBALL\" artifacts/ && echo Packed: artifacts/$TARBALL",
+    "prepare": "husky || true",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,js,mjs}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "tests/**/*.{ts,js,mjs}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "exports": {
     ".": {
@@ -56,13 +72,19 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "msw": "^2.10.4",
     "openapi-typescript": "^7.8.0",
     "prettier": "^3.6.2",
+    "typedoc": "^0.28.17",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "openapi-fetch": "^0.14.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.34.8"
   }
 }

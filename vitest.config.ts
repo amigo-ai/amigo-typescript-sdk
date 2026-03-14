@@ -7,6 +7,12 @@ export default defineConfig({
     coverage: {
       include: ['src/**/*.ts'],
       exclude: ['src/generated/**', 'coverage/**', '**/*.config.*', '**/*.test.*'],
+      thresholds: {
+        lines: 85,
+        branches: 80,
+        functions: 85,
+        statements: 85,
+      },
     },
     projects: [
       // Unit (non-integration) tests
