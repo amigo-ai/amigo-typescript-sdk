@@ -4,6 +4,8 @@ import { OrganizationResource } from './resources/organization'
 import { ConversationResource } from './resources/conversation'
 import { ServiceResource } from './resources/services'
 import { UserResource } from './resources/user'
+import { AgentResource } from './resources/agent'
+import { ContextGraphResource } from './resources/context-graph'
 import type { RetryOptions } from './core/retry'
 import type { UserId, OrgId } from './core/branded-types'
 
@@ -33,6 +35,8 @@ export class AmigoClient {
   readonly conversations: ConversationResource
   readonly services: ServiceResource
   readonly users: UserResource
+  readonly agents: AgentResource
+  readonly contextGraphs: ContextGraphResource
   readonly config: AmigoSdkConfig
 
   /** Create a new Amigo client with the given configuration. */
@@ -44,6 +48,8 @@ export class AmigoClient {
     this.conversations = new ConversationResource(api, this.config.orgId)
     this.services = new ServiceResource(api, this.config.orgId)
     this.users = new UserResource(api, this.config.orgId)
+    this.agents = new AgentResource(api, this.config.orgId)
+    this.contextGraphs = new ContextGraphResource(api, this.config.orgId)
   }
 }
 
