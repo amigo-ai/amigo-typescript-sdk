@@ -11,8 +11,6 @@ exports[`Generated Type Snapshots > should have stable exported type names 1`] =
 
 exports[`Generated Type Snapshots > should have stable operation IDs 1`] = `
 [
-  "access-git-interface",
-  "access-git-interface-post",
   "assign-role",
   "cancel-simulation-unit-test-set-run",
   "create-agent",
@@ -23,6 +21,7 @@ exports[`Generated Type Snapshots > should have stable operation IDs 1`] = `
   "create-dynamic-behavior-set-version",
   "create-invited-user",
   "create-metric",
+  "create-metric-version",
   "create-organization",
   "create-role",
   "create-service",
@@ -67,6 +66,7 @@ exports[`Generated Type Snapshots > should have stable operation IDs 1`] = `
   "get-interaction-insights",
   "get-memories",
   "get-metric-evaluation-results",
+  "get-metric-versions",
   "get-metrics",
   "get-models",
   "get-organization",
