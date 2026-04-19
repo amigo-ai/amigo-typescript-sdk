@@ -1,7 +1,14 @@
 {
   "name": "@amigo-ai/sdk",
   "version": "1.0.0-rc.1",
-  "description": "Amigo TypeScript SDK",
+  "description": "Official TypeScript SDK for the classic Amigo API",
+  "keywords": [
+    "amigo",
+    "sdk",
+    "typescript",
+    "api",
+    "conversation"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -9,7 +16,9 @@
   "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "gen-types": "node scripts/gen.mjs",
@@ -64,7 +73,7 @@
   "bugs": {
     "url": "https://github.com/amigo-ai/amigo-typescript-sdk/issues"
   },
-  "homepage": "https://github.com/amigo-ai/amigo-typescript-sdk#readme",
+  "homepage": "https://github.com/amigo-ai/amigo-typescript-sdk",
   "devDependencies": {
     "@types/node": "^24.2.0",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
