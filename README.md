@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/readme/classic-ts-banner.svg" alt="Classic TypeScript SDK banner" width="100%" />
+</p>
+
 <h1 align="center">@amigo-ai/sdk</h1>
 
 <p align="center">Official TypeScript SDK for the classic Amigo API.</p>
@@ -23,6 +27,12 @@
 
 Typed from the Amigo OpenAPI schema, shipped as ESM and CommonJS, and used by current org-scoped Amigo integrations.
 
+## Classic API Context
+
+The classic SDK is the typed client boundary between your application and the org-scoped Amigo API. It remains the right fit for current integrations that depend on the classic resource model while platform-native coverage expands.
+
+![Classic TypeScript SDK architecture](./assets/readme/classic-ts-architecture.svg)
+
 ## Product Status
 
 `@amigo-ai/sdk` remains the supported TypeScript client for the classic Amigo API.
@@ -35,10 +45,6 @@ The Platform API is the long-term home for new workspace-scoped capabilities, bu
 | --- | --- |
 | The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk` |
 | New workspace-scoped Platform API integrations | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
-
-## API Context
-
-This SDK is the typed client boundary between your application and the classic Amigo API at `https://api.amigo.ai`. It covers the current org-scoped resources used by existing Amigo deployments: conversations, services, organizations, users, agents, context graphs, webhooks, and streaming events.
 
 ## Documentation
 

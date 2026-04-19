@@ -1,0 +1,33 @@
+<svg width="1200" height="460" viewBox="0 0 1200 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="460" rx="28" fill="#F5F9FF"/>
+  <text x="68" y="72" fill="#0B2742" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Classic SDK context</text>
+  <text x="68" y="109" fill="#516B8A" font-family="Arial, Helvetica, sans-serif" font-size="20">Org-scoped runtime → SDK → classic Amigo API → current resources</text>
+  <rect x="68" y="166" width="232" height="176" rx="24" fill="#FFFFFF" stroke="#D7E4F7" stroke-width="2"/>
+  <text x="101" y="214" fill="#0B2742" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Your runtime</text>
+  <text x="101" y="258" fill="#516B8A" font-family="Arial, Helvetica, sans-serif" font-size="19">Node app</text>
+  <text x="101" y="288" fill="#516B8A" font-family="Arial, Helvetica, sans-serif" font-size="19">Worker</text>
+  <text x="101" y="318" fill="#516B8A" font-family="Arial, Helvetica, sans-serif" font-size="19">Backend service</text>
+  <rect x="364" y="132" width="244" height="244" rx="28" fill="#0B2742"/>
+  <text x="402" y="196" fill="#BCE9FF" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="0.14em">TYPESCRIPT SDK</text>
+  <text x="402" y="246" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">@amigo-ai/sdk</text>
+  <text x="402" y="293" fill="#C9DAF4" font-family="Arial, Helvetica, sans-serif" font-size="19">Auth, retries,</text>
+  <text x="402" y="322" fill="#C9DAF4" font-family="Arial, Helvetica, sans-serif" font-size="19">typed resources,</text>
+  <text x="402" y="351" fill="#C9DAF4" font-family="Arial, Helvetica, sans-serif" font-size="19">stream helpers</text>
+  <rect x="672" y="132" width="224" height="244" rx="28" fill="#1657C0"/>
+  <text x="706" y="196" fill="#DDF4FF" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="0.14em">CLASSIC API</text>
+  <text x="706" y="245" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">api.amigo.ai</text>
+  <text x="706" y="292" fill="#E4EEFF" font-family="Arial, Helvetica, sans-serif" font-size="19">Org-scoped</text>
+  <text x="706" y="321" fill="#E4EEFF" font-family="Arial, Helvetica, sans-serif" font-size="19">resource model</text>
+  <rect x="946" y="102" width="184" height="82" rx="22" fill="#FFFFFF" stroke="#D7E4F7" stroke-width="2"/>
+  <rect x="946" y="194" width="184" height="82" rx="22" fill="#FFFFFF" stroke="#D7E4F7" stroke-width="2"/>
+  <rect x="946" y="286" width="184" height="82" rx="22" fill="#FFFFFF" stroke="#D7E4F7" stroke-width="2"/>
+  <text x="977" y="145" fill="#0B2742" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Conversations</text>
+  <text x="977" y="237" fill="#0B2742" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Services + users</text>
+  <text x="977" y="329" fill="#0B2742" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Agents + graphs</text>
+  <path d="M300 254H346" stroke="#89A9D6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M608 254H654" stroke="#89A9D6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M896 254H928" stroke="#89A9D6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M928 254V145H946" stroke="#89A9D6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M928 254H946" stroke="#89A9D6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M928 254V327H946" stroke="#89A9D6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
