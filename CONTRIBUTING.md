@@ -1,208 +1,95 @@
 # Contributing to Amigo TypeScript SDK
 
-Thank you for your interest in contributing to the Amigo TypeScript SDK! This guide will help you get started with development, testing, and making changes to the SDK.
+Thank you for contributing to `@amigo-ai/sdk`. This repository ships the classic TypeScript SDK today while classic-to-platform migration work continues in parallel, so contributor changes should keep the existing classic package stable and well-documented.
 
 ## Development Setup
 
-1. Clone the repository
+1. Clone the repository.
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
 
-## Package.json Scripts Overview
+```bash
+npm install
+```
 
-The following npm scripts are available for development:
+## Scripts
 
-### Development & Build Scripts
+### Build And Codegen
 
-- **`npm run build`** - Full build process that:
-  - Generates OpenAPI types (`scripts/gen.mjs`)
-  - Builds the project with esbuild (`scripts/build.mjs`)
-  - Compiles TypeScript declarations (`tsc --project tsconfig.build.json`)
-- **`npm run dev`** - Development build with watch mode:
-  - Generates OpenAPI types
-  - Builds with esbuild in watch mode for automatic rebuilds
-- **`npm run pack:local`** - Builds the SDK and creates a tarball in `artifacts/` for local installation.
+- `npm run gen-types` regenerates all generated types
+- `npm run gen-types:classic` regenerates classic API types
+- `npm run gen-types:platform` regenerates platform migration types
+- `npm run build` runs codegen, bundles with esbuild, and emits declarations
+- `npm run dev` runs the build in watch mode
+- `npm run docs` rebuilds the published TypeDoc output
 
-### Code Generation
+### Testing
 
-- **`npm run gen-types`** - Generates TypeScript types from the OpenAPI schema
-  - Fetches the OpenAPI specification from `https://api.amigo.ai/v1/openapi.json`
-  - Generates types in `src/generated/api-types.ts`
+- `npm test` runs the unit test project
+- `npm run test:dist` verifies the built ESM and CJS artifacts
+- `npm run test:integration` runs live API integration tests
+- `npm run test:coverage` runs unit coverage
 
-### Testing Scripts
+### Code Quality
 
-- **`npm run test`** - Runs all **unit** tests using Vitest
-- **`npm run test:coverage`** - Runs all **unit** tests using Vitest and generates coverage report
-- **`npm run test:integration`** - Runs all **integration** tests using Vitest
-
-### Code Quality Scripts
-
-- **`npm run lint`** - Lints TypeScript files with ESLint (zero warnings policy)
-- **`npm run lint:fix`**: Automatically fixes ESLint issues in `src`.
-- **`npm run format`** - Checks code formatting with Prettier
-- **`npm run format:write`** - Automatically formats code with Prettier
+- `npm run lint` runs ESLint with zero warnings
+- `npm run format` checks formatting with Prettier
+- `npm run format:write` applies formatting
 
 ## Testing
 
-This project uses **Vitest** as the testing framework. Test files should follow the naming convention `*.test.ts` or `*.spec.ts`.
-
-### Test Configuration
-
-- Tests are located in the `tests/` directory
-- Test configuration is in `vitest.config.ts`
-- Tests run in Node.js environment
-- Global test utilities are available
-- Coverage reports exclude generated files and configuration
-
-### Running Tests
+This repository uses Vitest.
 
 ```bash
-# Run all tests once
-npm run test
-
-# Run integration tests which hit live API endpoints
+npm test
+npm run test:dist
 npm run test:integration
-
-# Run tests in watch mode during development
-npm run test:watch
-
-# Run tests with coverage report
 npm run test:coverage
 ```
 
-### Writing Tests
+Integration tests require valid Amigo API credentials in the environment.
 
-- Place test files in the `tests/` directory
-- Place integration test files in the `tests/integration` directory
-- Test helpers are available in `tests/test-helpers.ts`
-- The project uses MSW (Mock Service Worker) for API mocking
+## Type Generation
 
-Example test structure:
+Code generation is intentionally split:
 
-```typescript
-import { describe, it, expect } from 'vitest'
-import { YourModule } from '../src/your-module.js'
+- Classic API output is generated into `src/generated/`
+- Platform migration output is generated into `src/generated/platform-api-types.ts`
 
-describe('YourModule', () => {
-  it('should do something', () => {
-    // Your test here
-    expect(true).toBe(true)
-  })
-})
-```
-
-## OpenAPI Type Generation
-
-The SDK automatically generates TypeScript types from the Amigo API's OpenAPI specification.
-
-### How it Works
-
-1. The `scripts/gen.mjs` script fetches the OpenAPI schema from `https://api.amigo.ai/v1/openapi.json`
-2. Uses `openapi-typescript` to convert the schema into TypeScript types
-3. Generates types in `src/generated/api-types.ts`
-4. These types are used throughout the SDK for type safety
-
-### Regenerating Types
-
-Types are automatically regenerated during the build process, but you can manually regenerate them:
-
-```bash
-npm run gen-types
-```
-
-### Important Notes
-
-- **Never manually edit** files in `src/generated/` - they will be overwritten
-- Types are regenerated on every build to stay in sync with the API
-- The generated types are excluded from test coverage
-
-## Development Workflow
-
-1. **Start development**: `npm run dev` (builds and watches for changes)
-2. **Write tests**: Add tests in the `tests/` directory
-3. **Run tests**: `npm run test:watch` while developing
-4. **Lint and format**: `npm run lint` and `npm run format:write`
-5. **Build**: `npm run build` before submitting
+Never edit generated files manually.
 
 ## Project Structure
 
-```
+```text
 src/
-├── core/           # Core SDK functionality
-├── generated/      # Auto-generated OpenAPI types (do not edit)
-├── resources/      # API resource modules
-└── index.ts        # Main entry point
+├── core/            # auth, errors, retry, helpers
+├── generated/       # generated classic OpenAPI types
+├── platform/        # platform migration resources and types
+├── resources/       # classic API resources
+└── index.ts         # public package entry point
 
 tests/
-├── integration/    # Integration tests
-├── resources/      # Tests for resource modules
-└── *.test.ts       # Core functionality tests
+├── integration/     # live API tests
+├── resources/       # resource-level unit tests
+└── *.test.ts        # core package tests
+
+scripts/
+├── build.mjs
+├── gen-all.mjs
+├── gen-classic.mjs
+└── gen-platform.mjs
 ```
 
-## Pull Request Guidelines
+## Pull Requests
 
-1. Ensure all tests pass: `npm test`
-2. Lint your code: `npm run lint`
-3. Format your code: `npm run format:write`
-4. Build successfully: `npm run build`
-5. Add tests for new functionality
-6. Update documentation if needed
+Before opening a PR:
 
-## Release Process
+1. Run `npm run format:write`
+2. Run `npm run lint`
+3. Run `npm test`
+4. Run `npm run build`
+5. Run `npm run test:dist` for package-surface changes
+6. Update README or examples if customer-visible behavior changed
 
-Releases are handled via GitHub Actions. The release workflow:
+## Release Notes
 
-1. Reuses the test workflow to validate the build
-2. Regenerates OpenAPI types
-3. Bumps the version
-4. Builds and packs the package
-5. Publishes to npm (unless in dry run)
-6. Commits the version bump, creates a tag, and a GitHub Release
-
-### Required Repository Secrets
-
-Configure these secrets in your repository settings:
-
-- `NPM_TOKEN`: Token for publishing to npm
-- `CODECOV_TOKEN`: Token for Codecov uploads (used by CI test workflow)
-- `RELEASE_BOT_APP_ID`: GitHub App ID used to create tags/releases
-- `RELEASE_BOT_PRIVATE_KEY`: GitHub App private key (PEM) for the release bot
-
-### Auto-Release (OpenAPI changes)
-
-When the backend OpenAPI spec changes, the SDK can auto-release a new version.
-
-- Trigger: a `repository_dispatch` event with type `openapi-updated`
-- Detect job: fetches the provided `spec_url` (or defaults to `https://api.amigo.ai/v1/openapi.json`), normalizes and compares against `specs/openapi-baseline.json`
-- If changed: invokes the release workflow with `version_type=minor` and passes `spec_url` (supports `dry_run`)
-- Release workflow: regenerates types, bumps version, builds, publishes to npm, pushes tag, and creates a GitHub release
-
-Manual trigger example (repository_dispatch) using GitHub CLI:
-
-```bash
-# Values that mirror the workflow
-OWNER="amigo-ai"
-BACKEND_REPO="$OWNER/backend"
-COMMIT_SHA="$(git rev-parse HEAD 2>/dev/null || echo manual-test)"
-RUN_ID="$(date +%s)"  # stand-in for GitHub Actions run_id
-
-for repo in amigo-typescript-sdk amigo-python-sdk; do
-  echo "Notifying $repo..."
-  gh api "repos/$OWNER/$repo/dispatches" \
-    --method POST \
-    --header 'Accept: application/vnd.github+json' \
-    --input - <<EOF || echo "⚠️  Failed to notify $repo"
-{
-  "event_type": "openapi-updated",
-  "client_payload": {
-    "spec_url": "https://api.amigo.ai/v1/openapi.json",
-    "commit_sha": "$COMMIT_SHA",
-    "backend_repo": "$BACKEND_REPO",
-    "backend_run_id": "$RUN_ID"
-  }
-}
-EOF
-done
-```
+Releases are handled by GitHub Actions. If you change public package behavior, examples, or generated API surface, include enough context in the PR description for maintainers to produce accurate release notes.

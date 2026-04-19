@@ -1,15 +1,36 @@
-# Amigo TypeScript SDK
+# @amigo-ai/sdk
 
 [![Tests](https://github.com/amigo-ai/amigo-typescript-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/amigo-ai/amigo-typescript-sdk/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/amigo-ai/amigo-typescript-sdk/graph/badge.svg?token=PQU5JBU941)](https://codecov.io/gh/amigo-ai/amigo-typescript-sdk)
 [![npm version](https://img.shields.io/npm/v/%40amigo-ai%2Fsdk?logo=npm)](https://www.npmjs.com/package/@amigo-ai/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The official TypeScript SDK for the Amigo API, providing a simple and intuitive interface to interact with Amigo's AI services.
+Official TypeScript SDK for the Amigo API.
+
+Typed from the Amigo OpenAPI schema, shipped as both ESM and CommonJS, and designed for the classic org-scoped API used by existing Amigo integrations.
+
+## Documentation
+
+- [Product Docs](https://docs.amigo.ai)
+- [Developer Guide](https://docs.amigo.ai/developer-guide)
+- [Examples](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples)
+- [Changelog](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md)
+- [Contributing](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CONTRIBUTING.md)
+
+## Status
+
+This package remains the supported SDK for the classic Amigo API. The Amigo Platform API is the long-term home for new workspace-scoped capabilities, but classic customers are not being asked to make an abrupt rewrite. As equivalent platform surfaces become available, Amigo will publish a migration path and upgrade guidance before recommending a move.
+
+Classic is not end-of-life. Existing integrations can continue to build on `@amigo-ai/sdk` while platform coverage expands.
+
+## Choose The Right SDK
+
+| If you need                                                    | Use                                                                                   |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk`                                                                       |
+| New workspace-scoped Platform API integrations                 | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
 
 ## Installation
-
-Install the SDK using npm:
 
 ```bash
 npm install @amigo-ai/sdk
@@ -17,12 +38,9 @@ npm install @amigo-ai/sdk
 
 ## Quick Start
 
-### ES Modules (ESM)
-
 ```typescript
 import { AmigoClient } from '@amigo-ai/sdk'
 
-// Initialize the client
 const client = new AmigoClient({
   apiKey: 'your-api-key',
   apiKeyId: 'your-api-key-id',
@@ -30,108 +48,74 @@ const client = new AmigoClient({
   orgId: 'your-organization-id',
 })
 
-// List recent conversations
-async function example() {
-  try {
-    const conversations = await client.conversations.getConversations({
-      limit: 10,
-      sort_by: ['-created_at'],
-    })
-    console.log('Conversations:', conversations)
-  } catch (error) {
-    console.error('Error:', error)
-  }
-}
-
-example()
-```
-
-### CommonJS (CJS)
-
-```javascript
-const { AmigoClient } = require('@amigo-ai/sdk')
-
-const client = new AmigoClient({
-  apiKey: 'your-api-key',
-  apiKeyId: 'your-api-key-id',
-  userId: 'user-id',
-  orgId: 'your-organization-id',
+const conversations = await client.conversations.getConversations({
+  limit: 10,
+  sort_by: ['-created_at'],
 })
+
+console.log(conversations.conversations.map(conversation => conversation.id))
 ```
 
-## Examples
-
-- **Conversation management**:
-  - [Basic conversation](examples/conversation/basic-conversation.ts)
-  - [Streaming conversation events](examples/conversation/conversation-events.ts)
-- **User management**:
-  - [User management examples](examples/user/user-management.ts)
+ESM and CommonJS are both supported. See the [examples directory](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples) for runnable examples.
 
 ## Configuration
 
-The SDK requires the following configuration parameters:
+| Option     | Type           | Required | Description                                                   |
+| ---------- | -------------- | -------- | ------------------------------------------------------------- |
+| `apiKey`   | `string`       | Yes      | API key from the Amigo dashboard                              |
+| `apiKeyId` | `string`       | Yes      | API key ID paired with `apiKey`                               |
+| `userId`   | `string`       | Yes      | User ID on whose behalf the request is made                   |
+| `orgId`    | `string`       | Yes      | Organization ID for the classic API                           |
+| `baseUrl`  | `string`       | No       | Override the API base URL. Defaults to `https://api.amigo.ai` |
+| `retry`    | `RetryOptions` | No       | Retry policy overrides for transient HTTP failures            |
 
-| Parameter  | Type   | Required | Description                                                    |
-| ---------- | ------ | -------- | -------------------------------------------------------------- |
-| `apiKey`   | string | ✅       | API key from Amigo dashboard                                   |
-| `apiKeyId` | string | ✅       | API key ID from Amigo dashboard                                |
-| `userId`   | string | ✅       | User ID on whose behalf the request is made                    |
-| `orgId`    | string | ✅       | Your organization ID                                           |
-| `baseUrl`  | string | ❌       | Base URL of the Amigo API (defaults to `https://api.amigo.ai`) |
+## What This SDK Covers
 
-### Getting Your API Credentials
+- Conversations, including NDJSON event streaming
+- Services and version-set operations
+- Users and organizations
+- Agents and context graphs
+- Webhook helpers, rate-limit parsing, and typed SDK errors
 
-1. **API Key & API Key ID**: Generate these from your Amigo admin dashboard or programmatically using the API
-2. **Organization ID**: Found in your Amigo dashboard URL or organization settings
-3. **User ID**: The ID of the user you want to impersonate for API calls
+## Generated Types
 
-For detailed instructions on generating API keys, see the [Authentication Guide](https://docs.amigo.ai/developer-guide).
-
-### API compatibility
-
-This SDK auto-generates its types from the latest Amigo OpenAPI schema. As a result, only the latest published SDK version is guaranteed to match the current API. If you pin to an older version, it may not include the newest endpoints or fields.
-
-## Generated types
-
-The SDK ships with TypeScript types generated from the latest OpenAPI schema and re-exports them for convenience.
-
-- **Importing types**:
+The package re-exports the generated OpenAPI types so you can type application code directly from the API contract:
 
 ```typescript
 import type { components, operations, paths } from '@amigo-ai/sdk'
 
-// Example: response types
-type Conversation = components['schemas']['Conversation']
-
-// Example: operation params
-type GetConversationsParams = operations['getConversations']['parameters']['query']
+type Conversation = components['schemas']['ConversationInstance']
+type GetConversationsQuery = operations['get-conversations']['parameters']['query']
 ```
 
 ## Retries
 
-The HTTP client includes sensible, configurable retries:
+The HTTP client retries transient failures with sensible defaults:
 
-- **Defaults**:
-  - max attempts: 3
-  - backoff base: 250ms (exponential with full jitter)
-  - max delay per attempt: 30s
-  - retry on status: {408, 429, 500, 502, 503, 504}
-  - retry on methods: {GET}
-  - special-case: POST is retried on 429 when `Retry-After` is present
+- Max attempts: `3`
+- Backoff base: `250ms` with full jitter
+- Max delay per attempt: `30s`
+- Statuses: `408`, `429`, `500`, `502`, `503`, `504`
+- Methods: `GET`, plus `POST` on `429` when `Retry-After` is present
 
 ## Error Handling
 
-The SDK provides typed error handling:
-
 ```typescript
-import { AmigoClient, errors } from '@amigo-ai/sdk'
+import { AmigoClient, AuthenticationError, NetworkError } from '@amigo-ai/sdk'
 
 try {
-  const result = await client.organizations.getOrganization('org-id')
+  const client = new AmigoClient({
+    apiKey: 'your-api-key',
+    apiKeyId: 'your-api-key-id',
+    userId: 'user-id',
+    orgId: 'your-organization-id',
+  })
+
+  await client.organizations.getOrganization()
 } catch (error) {
-  if (error instanceof errors.AuthenticationError) {
+  if (error instanceof AuthenticationError) {
     console.error('Authentication failed:', error.message)
-  } else if (error instanceof errors.NetworkError) {
+  } else if (error instanceof NetworkError) {
     console.error('Network error:', error.message)
   } else {
     console.error('Unexpected error:', error)
@@ -139,41 +123,6 @@ try {
 }
 ```
 
-## Troubleshooting
-
-### Authentication errors
-
-- **`AuthenticationError: Authentication failed`**: Verify your `apiKey` and `apiKeyId` are correct and haven't been revoked. Regenerate them from the Amigo dashboard if needed.
-- **Token refresh failures**: The SDK refreshes tokens automatically 5 minutes before expiry. If this persists, check that your system clock is accurate.
-
-### Configuration issues
-
-- **`ConfigurationError`**: Ensure all required fields (`apiKey`, `apiKeyId`, `userId`, `orgId`) are provided when constructing `AmigoClient`.
-
-### Connection issues
-
-- **`NetworkError` or timeouts**: Check your network connectivity and that `https://api.amigo.ai` is reachable. If behind a corporate proxy, configure your environment's proxy settings.
-- **`RateLimitError`**: The SDK retries automatically on 429 responses with `Retry-After` headers. If you consistently hit rate limits, reduce request frequency or contact support.
-
-### TypeScript / import issues
-
-- **`Cannot find module '@amigo-ai/sdk'`**: Ensure the package is installed: `npm install @amigo-ai/sdk`.
-- **Type errors with generated types**: Update to the latest SDK version (`npm install @amigo-ai/sdk@latest`) — types are regenerated from the OpenAPI spec on each release.
-- **ESM/CJS import issues**: The SDK supports both. Use `import { AmigoClient } from '@amigo-ai/sdk'` for ESM or `const { AmigoClient } = require('@amigo-ai/sdk')` for CJS. Ensure your `tsconfig.json` has compatible `moduleResolution` settings.
-
-### Streaming issues
-
-- **NDJSON stream not yielding events**: Ensure you're using `for await` to consume the async generator returned by `createConversation` and `interactWithConversation`.
-
-## Documentation
-
-- **Developer Guide**: [https://docs.amigo.ai/developer-guide](https://docs.amigo.ai/developer-guide)
-- **API Reference**: [https://docs.amigo.ai/api-reference](https://docs.amigo.ai/api-reference)
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Support
 
-For questions, issues, or feature requests, please visit our [GitHub repository](https://github.com/amigo-ai/amigo-typescript-sdk) or contact support through the Amigo dashboard.
+Use the [issue tracker](https://github.com/amigo-ai/amigo-typescript-sdk/issues) for bugs and feature requests. For vulnerability reports, see [SECURITY.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/SECURITY.md).
