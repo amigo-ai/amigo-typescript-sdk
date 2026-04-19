@@ -70,7 +70,7 @@
     "type": "git",
     "url": "git+https://github.com/amigo-ai/amigo-typescript-sdk.git"
   },
-  "author": "Amigo AI",
+  "author": "Amigo Inc.",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/amigo-ai/amigo-typescript-sdk/issues"
