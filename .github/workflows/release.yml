@@ -54,6 +54,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # Reuse the existing test workflow
   test:
@@ -72,19 +75,19 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:
           app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
           private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version: '22'
           cache: 'npm'
@@ -159,40 +162,6 @@ jobs:
           echo "tag=$DIST_TAG" >> $GITHUB_OUTPUT
           echo "Using npm dist-tag: $DIST_TAG"
 
-      - name: Build package
-        run: |
-          echo "🔄 Building package..."
-          rm -rf dist/
-          npm run build
-          echo "✅ Package built successfully"
-          ls -la dist/
-
-      - name: Pack tarball
-        id: pack
-        run: |
-          echo "🔄 Creating npm pack tarball..."
-          FILE=$(npm pack --silent)
-          echo "file=$FILE" >> $GITHUB_OUTPUT
-          echo "✅ Tarball created: $FILE"
-          ls -la "$FILE"
-
-      - name: Publish to npm
-        if: ${{ !inputs.dry_run }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "🔄 Publishing to npm..."
-          FILE="${{ steps.pack.outputs.file }}"
-          npm publish "$FILE" --provenance --access public --tag "${{ steps.npm_tag.outputs.tag }}"
-          echo "✅ Package published to npm with dist-tag '${{ steps.npm_tag.outputs.tag }}'"
-
-      - name: Commit version bump
-        if: ${{ !inputs.dry_run }}
-        run: |
-          git add package.json package-lock.json specs/openapi-baseline.json CHANGELOG.md || true
-          git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
-          git push origin HEAD
-
       - name: Update CHANGELOG.md
         if: ${{ !inputs.dry_run }}
         run: |
@@ -215,7 +184,7 @@ jobs:
       - name: Build release notes
         if: ${{ !inputs.dry_run }}
         run: |
-          # Get the most recent git tag (not from package.json, which may be ahead if a prior release failed)
+          # Capture notes before the release commit so the metadata commit is not listed as a product change.
           PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           NEW_TAG="v${{ steps.new_version.outputs.version }}"
 
@@ -277,6 +246,40 @@ jobs:
           echo "📝 Generated release notes:"
           cat release-notes.md
 
+      - name: Build package
+        run: |
+          echo "🔄 Building package..."
+          rm -rf dist/
+          npm run build
+          echo "✅ Package built successfully"
+          ls -la dist/
+
+      - name: Pack tarball
+        id: pack
+        run: |
+          echo "🔄 Creating npm pack tarball..."
+          FILE=$(npm pack --silent)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+          echo "✅ Tarball created: $FILE"
+          ls -la "$FILE"
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "🔄 Publishing to npm..."
+          FILE="${{ steps.pack.outputs.file }}"
+          npm publish "$FILE" --provenance --access public --tag "${{ steps.npm_tag.outputs.tag }}"
+          echo "✅ Package published to npm with dist-tag '${{ steps.npm_tag.outputs.tag }}'"
+
+      - name: Commit version bump
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git add package.json package-lock.json specs/openapi-baseline.json CHANGELOG.md || true
+          git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
+          git push origin HEAD
+
       - name: Create and push tag
         if: ${{ !inputs.dry_run }}
         run: |
@@ -285,7 +288,7 @@ jobs:
 
       - name: Create GitHub Release
         if: ${{ !inputs.dry_run }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           token: ${{ steps.app-token.outputs.token }}
           tag_name: 'v${{ steps.new_version.outputs.version }}'
@@ -302,7 +305,7 @@ jobs:
 
       - name: Upload build artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist-${{ steps.new_version.outputs.version }}
           path: |
