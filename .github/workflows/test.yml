@@ -68,26 +68,56 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
+      - name: Check integration environment
+        id: integration-env
+        env:
+          AMIGO_API_KEY: ${{ secrets.AMIGO_API_KEY }}
+          AMIGO_API_KEY_ID: ${{ secrets.AMIGO_API_KEY_ID }}
+          AMIGO_ORGANIZATION_ID: ${{ secrets.AMIGO_ORGANIZATION_ID }}
+          AMIGO_USER_ID: ${{ secrets.AMIGO_USER_ID }}
+          AMIGO_TEST_SERVICE_ID: ${{ secrets.AMIGO_TEST_SERVICE_ID }}
+        run: |
+          missing=()
+          for var in AMIGO_API_KEY AMIGO_API_KEY_ID AMIGO_ORGANIZATION_ID AMIGO_USER_ID AMIGO_TEST_SERVICE_ID; do
+            if [ -z "${!var}" ]; then
+              missing+=("$var")
+            fi
+          done
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping integration tests because required secrets are unavailable: ${missing[*]}"
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
+        if: steps.integration-env.outputs.ready == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Node
+        if: steps.integration-env.outputs.ready == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.integration-env.outputs.ready == 'true'
         run: npm ci
 
       - name: Build
+        if: steps.integration-env.outputs.ready == 'true'
         run: npm run build
 
       - name: Run integration tests
+        if: steps.integration-env.outputs.ready == 'true'
         env:
           AMIGO_API_KEY: ${{ secrets.AMIGO_API_KEY }}
           AMIGO_API_KEY_ID: ${{ secrets.AMIGO_API_KEY_ID }}
           AMIGO_ORGANIZATION_ID: ${{ secrets.AMIGO_ORGANIZATION_ID }}
           AMIGO_USER_ID: ${{ secrets.AMIGO_USER_ID }}
           AMIGO_BASE_URL: ${{ secrets.AMIGO_BASE_URL }}
+          AMIGO_TEST_SERVICE_ID: ${{ secrets.AMIGO_TEST_SERVICE_ID }}
         run: npm run test:integration
