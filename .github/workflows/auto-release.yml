@@ -7,6 +7,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   detect:
     name: Detect OpenAPI change
@@ -15,7 +18,7 @@ jobs:
       changed: ${{ steps.diff.outputs.changed }}
       spec_url: ${{ steps.spec.outputs.spec_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Ensure jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -161,7 +164,7 @@ jobs:
 
       - name: Upload normalized specs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: normalized-specs
           path: |
