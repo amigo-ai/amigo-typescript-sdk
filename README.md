@@ -31,7 +31,7 @@ Typed from the committed classic OpenAPI snapshot, shipped as ESM and CommonJS, 
 
 The classic SDK is the typed client boundary between your application and the org-scoped Amigo API. It remains the right fit for current integrations that depend on the classic resource model while platform-native coverage expands.
 
-![Classic TypeScript SDK architecture](./assets/readme/classic-ts-architecture.svg)
+![Classic TypeScript SDK architecture](./assets/readme/classic-ts-architecture.png)
 
 ## Product Status
 
