@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://docs.amigo.ai">Product Docs</a>
   ·
-  <a href="https://docs.amigo.ai/developer-guide">Developer Guide</a>
+  <a href="https://docs.amigo.ai/developer-guide/classic-api/sdks">Developer Guide</a>
   ·
   <a href="https://amigo-ai.github.io/amigo-typescript-sdk/">API Reference</a>
   ·
@@ -51,7 +51,7 @@ The Platform API is where new workspace-scoped capabilities land first, but the 
 | Need                                    | Best entry point                                                                            |
 | --------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Product overview and deployment context | [docs.amigo.ai](https://docs.amigo.ai/)                                                     |
-| Integration guidance and developer docs | [Developer Guide](https://docs.amigo.ai/developer-guide)                                    |
+| Integration guidance and developer docs | [Developer Guide](https://docs.amigo.ai/developer-guide/classic-api/sdks)                   |
 | Generated API reference                 | [amigo-ai.github.io/amigo-typescript-sdk](https://amigo-ai.github.io/amigo-typescript-sdk/) |
 | Runnable examples                       | [examples/](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples)            |
 | Release history                         | [CHANGELOG.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md)     |
