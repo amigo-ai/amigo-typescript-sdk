@@ -1,120 +1,112 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import openapiTS, { astToString } from 'openapi-typescript'
-import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
 
-const schemaUrl = 'https://api.amigo.ai/v1/openapi.json'
-const outTypesFile = 'src/generated/api-types.ts'
+const REPO_ROOT = process.cwd()
+const DEFAULT_SPEC = path.resolve(REPO_ROOT, 'specs/openapi-baseline.json')
+const OUT_FILE = path.resolve(REPO_ROOT, 'src/generated/api-types.ts')
+const args = process.argv.slice(2)
 
-/* -------- Fetch and fix the schema -------- */
-console.log('📥 Fetching OpenAPI schema...')
-
-let schema
-try {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30000)
-
-  const response = await fetch(schemaUrl, { signal: controller.signal })
-  clearTimeout(timeout)
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} ${response.statusText}`)
-  }
-  schema = await response.json()
-} catch (err) {
-  if (err.name === 'AbortError') {
-    throw new Error(`Failed to fetch schema: request timed out after 30s`)
-  }
-  throw new Error(`Failed to fetch schema: ${err.message}`)
+function getArgValue(name) {
+  const index = args.indexOf(name)
+  return index === -1 ? undefined : args[index + 1]
 }
 
-// Fix broken discriminator mappings by removing references to non-existent schemas.
-// The API sometimes has discriminator mappings that point to schemas that don't exist,
-// which causes openapi-typescript to fail during validation.
-const existingSchemas = new Set(Object.keys(schema.components?.schemas || {}))
-let brokenMappingsCount = 0
+function resolveSpecSource() {
+  const specArg = getArgValue('--spec')
+  if (specArg) {
+    const resolvedPath = path.resolve(REPO_ROOT, specArg)
+    console.log(`Using explicit spec: ${resolvedPath}`)
+    return resolvedPath
+  }
 
-function fixDiscriminatorMappings(obj) {
-  if (!obj || typeof obj !== 'object') return
+  if (fs.existsSync(DEFAULT_SPEC)) {
+    console.log(`Using committed spec snapshot: ${DEFAULT_SPEC}`)
+    return DEFAULT_SPEC
+  }
 
-  if (obj.discriminator?.mapping) {
-    const mapping = obj.discriminator.mapping
-    for (const [key, ref] of Object.entries(mapping)) {
-      // Extract schema name from $ref like "#/components/schemas/SchemaName"
-      const schemaName = ref.replace('#/components/schemas/', '')
-      if (!existingSchemas.has(schemaName)) {
-        delete mapping[key]
-        brokenMappingsCount++
-        console.warn(`⚠️  Removing broken discriminator mapping: ${key} -> ${ref}`)
+  throw new Error(
+    'No committed OpenAPI snapshot found at specs/openapi-baseline.json. Run `npm run openapi:sync` first.',
+  )
+}
+
+async function loadSpec(specSource) {
+  const raw = fs.readFileSync(specSource, 'utf-8')
+  const document = JSON.parse(raw)
+
+  if (!document || typeof document !== 'object' || typeof document.openapi !== 'string') {
+    throw new Error(`Invalid OpenAPI document: ${specSource}`)
+  }
+
+  return document
+}
+
+function patchOpenApiDocument(schema) {
+  const existingSchemas = new Set(Object.keys(schema.components?.schemas || {}))
+
+  function fixDiscriminatorMappings(obj) {
+    if (!obj || typeof obj !== 'object') return
+
+    if (obj.discriminator?.mapping) {
+      const mapping = obj.discriminator.mapping
+      for (const [key, ref] of Object.entries(mapping)) {
+        const schemaName = ref.replace('#/components/schemas/', '')
+        if (!existingSchemas.has(schemaName)) {
+          delete mapping[key]
+          console.warn(`Removing broken discriminator mapping: ${key} -> ${ref}`)
+        }
+      }
+    }
+
+    for (const value of Object.values(obj)) {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          fixDiscriminatorMappings(item)
+        }
+      } else if (typeof value === 'object' && value !== null) {
+        fixDiscriminatorMappings(value)
       }
     }
   }
 
-  // Recursively process nested objects and arrays
-  for (const value of Object.values(obj)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        fixDiscriminatorMappings(item)
+  fixDiscriminatorMappings(schema)
+
+  const seenOperationIds = new Map()
+  for (const [pathKey, methods] of Object.entries(schema.paths || {})) {
+    for (const [method, operation] of Object.entries(methods)) {
+      if (typeof operation !== 'object' || !operation.operationId) continue
+
+      const operationId = operation.operationId
+      if (seenOperationIds.has(operationId)) {
+        const nextOperationId = `${operationId}-${method}`
+        console.warn(
+          `Fixing duplicate operationId: ${operationId} -> ${nextOperationId} (${method.toUpperCase()} ${pathKey})`,
+        )
+        operation.operationId = nextOperationId
+      } else {
+        seenOperationIds.set(operationId, true)
       }
-    } else if (typeof value === 'object' && value !== null) {
-      fixDiscriminatorMappings(value)
     }
   }
+
+  return schema
 }
 
-fixDiscriminatorMappings(schema)
+const specSource = resolveSpecSource()
+console.log(`Generating types from: ${specSource}`)
 
-if (brokenMappingsCount > 0) {
-  console.warn(`⚠️  Removed ${brokenMappingsCount} broken discriminator mapping(s) from schema`)
-}
+const schema = patchOpenApiDocument(await loadSpec(specSource))
+const ast = await openapiTS(schema, { defaultNonNullable: false })
 
-// Fix duplicate operationIds by appending the HTTP method to make them unique.
-// The API sometimes reuses the same operationId across different HTTP methods on the same path.
-const seenOperationIds = new Map()
-let duplicateFixCount = 0
-
-for (const [path, methods] of Object.entries(schema.paths || {})) {
-  for (const [method, op] of Object.entries(methods)) {
-    if (typeof op !== 'object' || !op.operationId) continue
-    const key = op.operationId
-    if (seenOperationIds.has(key)) {
-      const newId = `${key}-${method}`
-      console.warn(
-        `⚠️  Fixing duplicate operationId: ${key} -> ${newId} (${method.toUpperCase()} ${path})`
-      )
-      op.operationId = newId
-      duplicateFixCount++
-    } else {
-      seenOperationIds.set(key, `${method.toUpperCase()} ${path}`)
-    }
-  }
-}
-
-if (duplicateFixCount > 0) {
-  console.warn(`⚠️  Fixed ${duplicateFixCount} duplicate operationId(s) in schema`)
-}
-
-/* -------- TypeScript types -------- */
-await mkdir(dirname(outTypesFile), { recursive: true })
-
-let ast
-try {
-  ast = await openapiTS(schema, { defaultNonNullable: false })
-} catch (err) {
-  throw new Error(`Failed to generate TypeScript types: ${err.message}`)
-}
-
-// Convert AST to string and apply targeted overrides
 let code = astToString(ast)
 
-// Override ONLY the `interact-with-conversation` operation's requestBody to `any`
 const interactOpPattern = /(\"interact-with-conversation\":\s*\{[\s\S]*?)(requestBody\?:\s*never;)/
 code = code.replace(interactOpPattern, '$1requestBody?: any;')
-
-// Strip noisy schema name prefix for cleaner consumer types
-// e.g., components["schemas"]["src__app__endpoints__conversation__create_conversation__Request"]
-//   => components["schemas"]["conversation__create_conversation__Request"]
 code = code.replace(/src__app__endpoints__/g, '')
 
-await writeFile(outTypesFile, code)
+fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true })
+fs.writeFileSync(OUT_FILE, code)
 
-console.log('✅ OpenAPI types generated')
+const pathCount = Object.keys(schema.paths || {}).length
+const schemaCount = Object.keys(schema.components?.schemas || {}).length
+console.log(`Generated ${OUT_FILE}: ${pathCount} paths, ${schemaCount} schemas`)

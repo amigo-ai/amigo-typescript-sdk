@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "gen-types": "node scripts/gen.mjs",
+    "openapi:sync": "node scripts/sync-openapi.mjs",
     "test": "vitest run --project unit",
     "test:dist": "vitest run --project dist",
     "test:integration": "vitest run --project integration",
@@ -96,5 +97,8 @@
   },
   "dependencies": {
     "openapi-fetch": "^0.14.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.59.0"
   }
 }
