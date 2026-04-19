@@ -1,34 +1,54 @@
-# @amigo-ai/sdk
+<h1 align="center">@amigo-ai/sdk</h1>
 
-[![Tests](https://github.com/amigo-ai/amigo-typescript-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/amigo-ai/amigo-typescript-sdk/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/amigo-ai/amigo-typescript-sdk/graph/badge.svg?token=PQU5JBU941)](https://codecov.io/gh/amigo-ai/amigo-typescript-sdk)
-[![npm version](https://img.shields.io/npm/v/%40amigo-ai%2Fsdk?logo=npm)](https://www.npmjs.com/package/@amigo-ai/sdk)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">Official TypeScript SDK for the classic Amigo API.</p>
 
-Official TypeScript SDK for the Amigo API.
+<p align="center">
+  <a href="https://docs.amigo.ai">Product Docs</a>
+  ·
+  <a href="https://docs.amigo.ai/developer-guide">Developer Guide</a>
+  ·
+  <a href="https://amigo-ai.github.io/amigo-typescript-sdk/">API Reference</a>
+  ·
+  <a href="https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples">Examples</a>
+  ·
+  <a href="https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md">Changelog</a>
+</p>
 
-Typed from the Amigo OpenAPI schema, shipped as both ESM and CommonJS, and designed for the classic org-scoped API used by existing Amigo integrations.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@amigo-ai/sdk"><img src="https://img.shields.io/npm/v/%40amigo-ai%2Fsdk?logo=npm" alt="npm version" /></a>
+  <a href="https://github.com/amigo-ai/amigo-typescript-sdk/actions/workflows/test.yml"><img src="https://github.com/amigo-ai/amigo-typescript-sdk/actions/workflows/test.yml/badge.svg" alt="CI" /></a>
+  <a href="https://codecov.io/gh/amigo-ai/amigo-typescript-sdk"><img src="https://codecov.io/gh/amigo-ai/amigo-typescript-sdk/graph/badge.svg?token=PQU5JBU941" alt="codecov" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" /></a>
+</p>
 
-## Documentation
+Typed from the Amigo OpenAPI schema, shipped as ESM and CommonJS, and used by current org-scoped Amigo integrations.
 
-- [Product Docs](https://docs.amigo.ai)
-- [Developer Guide](https://docs.amigo.ai/developer-guide)
-- [Examples](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples)
-- [Changelog](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md)
-- [Contributing](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CONTRIBUTING.md)
+## Product Status
 
-## Status
+`@amigo-ai/sdk` remains the supported TypeScript client for the classic Amigo API.
 
-This package remains the supported SDK for the classic Amigo API. The Amigo Platform API is the long-term home for new workspace-scoped capabilities, but classic customers are not being asked to make an abrupt rewrite. As equivalent platform surfaces become available, Amigo will publish a migration path and upgrade guidance before recommending a move.
-
-Classic is not end-of-life. Existing integrations can continue to build on `@amigo-ai/sdk` while platform coverage expands.
+The Platform API is the long-term home for new workspace-scoped capabilities, but classic customers are not being asked to make an abrupt rewrite. As equivalent platform surfaces become available, Amigo will publish a migration path and upgrade guidance before recommending a move.
 
 ## Choose The Right SDK
 
-| If you need                                                    | Use                                                                                   |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk`                                                                       |
-| New workspace-scoped Platform API integrations                 | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
+| If you need | Use |
+| --- | --- |
+| The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk` |
+| New workspace-scoped Platform API integrations | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
+
+## API Context
+
+This SDK is the typed client boundary between your application and the classic Amigo API at `https://api.amigo.ai`. It covers the current org-scoped resources used by existing Amigo deployments: conversations, services, organizations, users, agents, context graphs, webhooks, and streaming events.
+
+## Documentation
+
+| Need | Best entry point |
+| --- | --- |
+| Product overview and deployment context | [docs.amigo.ai](https://docs.amigo.ai/) |
+| Integration guidance and developer docs | [Developer Guide](https://docs.amigo.ai/developer-guide) |
+| Generated API reference | [amigo-ai.github.io/amigo-typescript-sdk](https://amigo-ai.github.io/amigo-typescript-sdk/) |
+| Runnable examples | [examples/](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples) |
+| Release history | [CHANGELOG.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md) |
 
 ## Installation
 
@@ -53,33 +73,27 @@ const conversations = await client.conversations.getConversations({
   sort_by: ['-created_at'],
 })
 
-console.log(conversations.conversations.map(conversation => conversation.id))
+console.log(conversations.conversations.map((conversation) => conversation.id))
 ```
-
-ESM and CommonJS are both supported. See the [examples directory](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples) for runnable examples.
 
 ## Configuration
 
-| Option     | Type           | Required | Description                                                   |
-| ---------- | -------------- | -------- | ------------------------------------------------------------- |
-| `apiKey`   | `string`       | Yes      | API key from the Amigo dashboard                              |
-| `apiKeyId` | `string`       | Yes      | API key ID paired with `apiKey`                               |
-| `userId`   | `string`       | Yes      | User ID on whose behalf the request is made                   |
-| `orgId`    | `string`       | Yes      | Organization ID for the classic API                           |
-| `baseUrl`  | `string`       | No       | Override the API base URL. Defaults to `https://api.amigo.ai` |
-| `retry`    | `RetryOptions` | No       | Retry policy overrides for transient HTTP failures            |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `apiKey` | `string` | Yes | API key from the Amigo dashboard |
+| `apiKeyId` | `string` | Yes | API key ID paired with `apiKey` |
+| `userId` | `string` | Yes | User ID on whose behalf the request is made |
+| `orgId` | `string` | Yes | Organization ID for the classic API |
+| `baseUrl` | `string` | No | Override the API base URL. Defaults to `https://api.amigo.ai` |
+| `retry` | `RetryOptions` | No | Retry policy overrides for transient HTTP failures |
 
-## What This SDK Covers
+### Runtime Requirements
 
-- Conversations, including NDJSON event streaming
-- Services and version-set operations
-- Users and organizations
-- Agents and context graphs
-- Webhook helpers, rate-limit parsing, and typed SDK errors
+The SDK supports Node `18+` and is tested on active Node releases in CI. It relies on web-standard primitives such as `fetch`, `AbortController`, `URL`, and `TextEncoder`.
 
 ## Generated Types
 
-The package re-exports the generated OpenAPI types so you can type application code directly from the API contract:
+The package re-exports the generated OpenAPI types so application code can type directly against the API contract:
 
 ```typescript
 import type { components, operations, paths } from '@amigo-ai/sdk'
@@ -125,4 +139,4 @@ try {
 
 ## Support
 
-Use the [issue tracker](https://github.com/amigo-ai/amigo-typescript-sdk/issues) for bugs and feature requests. For vulnerability reports, see [SECURITY.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/SECURITY.md).
+Use the [issue tracker](https://github.com/amigo-ai/amigo-typescript-sdk/issues) for bugs and feature requests. For responsible disclosure, see [SECURITY.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/SECURITY.md).
