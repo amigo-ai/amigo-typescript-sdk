@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/readme/classic-ts-banner.svg" alt="Classic TypeScript SDK banner" width="100%" />
+</p>
+
 <h1 align="center">@amigo-ai/sdk</h1>
 
 <p align="center">Official TypeScript SDK for the classic Amigo API.</p>
@@ -21,7 +25,13 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" /></a>
 </p>
 
-Typed from the Amigo OpenAPI schema, shipped as ESM and CommonJS, and used by current org-scoped Amigo integrations.
+Typed from the committed classic OpenAPI snapshot, shipped as ESM and CommonJS, and used by current org-scoped Amigo integrations.
+
+## Classic API Context
+
+The classic SDK is the typed client boundary between your application and the org-scoped Amigo API. It remains the right fit for current integrations that depend on the classic resource model while platform-native coverage expands.
+
+![Classic TypeScript SDK architecture](./assets/readme/classic-ts-architecture.svg)
 
 ## Product Status
 
@@ -31,24 +41,20 @@ The Platform API is the long-term home for new workspace-scoped capabilities, bu
 
 ## Choose The Right SDK
 
-| If you need | Use |
-| --- | --- |
-| The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk` |
-| New workspace-scoped Platform API integrations | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
-
-## API Context
-
-This SDK is the typed client boundary between your application and the classic Amigo API at `https://api.amigo.ai`. It covers the current org-scoped resources used by existing Amigo deployments: conversations, services, organizations, users, agents, context graphs, webhooks, and streaming events.
+| If you need                                                    | Use                                                                                   |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk`                                                                       |
+| New workspace-scoped Platform API integrations                 | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
 
 ## Documentation
 
-| Need | Best entry point |
-| --- | --- |
-| Product overview and deployment context | [docs.amigo.ai](https://docs.amigo.ai/) |
-| Integration guidance and developer docs | [Developer Guide](https://docs.amigo.ai/developer-guide) |
-| Generated API reference | [amigo-ai.github.io/amigo-typescript-sdk](https://amigo-ai.github.io/amigo-typescript-sdk/) |
-| Runnable examples | [examples/](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples) |
-| Release history | [CHANGELOG.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md) |
+| Need                                    | Best entry point                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Product overview and deployment context | [docs.amigo.ai](https://docs.amigo.ai/)                                                     |
+| Integration guidance and developer docs | [Developer Guide](https://docs.amigo.ai/developer-guide)                                    |
+| Generated API reference                 | [amigo-ai.github.io/amigo-typescript-sdk](https://amigo-ai.github.io/amigo-typescript-sdk/) |
+| Runnable examples                       | [examples/](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples)            |
+| Release history                         | [CHANGELOG.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md)     |
 
 ## Installation
 
@@ -73,19 +79,19 @@ const conversations = await client.conversations.getConversations({
   sort_by: ['-created_at'],
 })
 
-console.log(conversations.conversations.map((conversation) => conversation.id))
+console.log(conversations.conversations.map(conversation => conversation.id))
 ```
 
 ## Configuration
 
-| Option | Type | Required | Description |
-| --- | --- | --- | --- |
-| `apiKey` | `string` | Yes | API key from the Amigo dashboard |
-| `apiKeyId` | `string` | Yes | API key ID paired with `apiKey` |
-| `userId` | `string` | Yes | User ID on whose behalf the request is made |
-| `orgId` | `string` | Yes | Organization ID for the classic API |
-| `baseUrl` | `string` | No | Override the API base URL. Defaults to `https://api.amigo.ai` |
-| `retry` | `RetryOptions` | No | Retry policy overrides for transient HTTP failures |
+| Option     | Type           | Required | Description                                                   |
+| ---------- | -------------- | -------- | ------------------------------------------------------------- |
+| `apiKey`   | `string`       | Yes      | API key from the Amigo dashboard                              |
+| `apiKeyId` | `string`       | Yes      | API key ID paired with `apiKey`                               |
+| `userId`   | `string`       | Yes      | User ID on whose behalf the request is made                   |
+| `orgId`    | `string`       | Yes      | Organization ID for the classic API                           |
+| `baseUrl`  | `string`       | No       | Override the API base URL. Defaults to `https://api.amigo.ai` |
+| `retry`    | `RetryOptions` | No       | Retry policy overrides for transient HTTP failures            |
 
 ### Runtime Requirements
 
@@ -100,6 +106,12 @@ import type { components, operations, paths } from '@amigo-ai/sdk'
 
 type Conversation = components['schemas']['ConversationInstance']
 type GetConversationsQuery = operations['get-conversations']['parameters']['query']
+```
+
+Public builds are generated from the committed [`specs/openapi-baseline.json`](./specs/openapi-baseline.json) snapshot in this repo so type output stays deterministic across machines and CI runs. When you need to refresh that snapshot, run:
+
+```bash
+npm run openapi:sync
 ```
 
 ## Retries
