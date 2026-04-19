@@ -4,7 +4,7 @@
 
 <h1 align="center">@amigo-ai/sdk</h1>
 
-<p align="center">Official TypeScript SDK for the classic Amigo API.</p>
+<p align="center">Official TypeScript SDK for the Classic Amigo API.</p>
 
 <p align="center">
   <a href="https://docs.amigo.ai">Product Docs</a>
@@ -25,26 +25,26 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" /></a>
 </p>
 
-Typed from the committed classic OpenAPI snapshot, shipped as ESM and CommonJS, and used by current org-scoped Amigo integrations.
+Typed from the committed Classic OpenAPI snapshot, shipped as ESM and CommonJS, and used by existing org-scoped integrations on the original Amigo backend at `api.amigo.ai`.
 
-## Classic API Context
+## Classic Backend Context
 
-The classic SDK is the typed client boundary between your application and the org-scoped Amigo API. It remains the right fit for current integrations that depend on the classic resource model while platform-native coverage expands.
+`@amigo-ai/sdk` targets the original org-scoped Amigo backend. Existing deployments still use this surface for conversations, services, organizations, users, agents, context graphs, webhooks, and streaming events.
 
-![Classic TypeScript SDK architecture](./assets/readme/classic-ts-architecture.png)
+![Classic text session flow](./assets/readme/classic-session-flow.svg)
 
 ## Product Status
 
-`@amigo-ai/sdk` remains the supported TypeScript client for the classic Amigo API.
+`@amigo-ai/sdk` remains the supported TypeScript client for the Classic API.
 
-The Platform API is the long-term home for new workspace-scoped capabilities, but classic customers are not being asked to make an abrupt rewrite. As equivalent platform surfaces become available, Amigo will publish a migration path and upgrade guidance before recommending a move.
+The Platform API is where new workspace-scoped capabilities land first, but the Classic API is not being switched off abruptly. Amigo will publish a migration path, compatibility notes, and upgrade guidance before asking customers to move production workloads.
 
 ## Choose The Right SDK
 
-| If you need                                                    | Use                                                                                   |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| The current org-scoped Amigo API used by existing integrations | `@amigo-ai/sdk`                                                                       |
-| New workspace-scoped Platform API integrations                 | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
+| If you need                                                  | Start here                                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Existing org-scoped integrations on `api.amigo.ai`           | `@amigo-ai/sdk`                                                                       |
+| New workspace-scoped integrations on `api.platform.amigo.ai` | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
 
 ## Documentation
 
@@ -55,6 +55,8 @@ The Platform API is the long-term home for new workspace-scoped capabilities, bu
 | Generated API reference                 | [amigo-ai.github.io/amigo-typescript-sdk](https://amigo-ai.github.io/amigo-typescript-sdk/) |
 | Runnable examples                       | [examples/](https://github.com/amigo-ai/amigo-typescript-sdk/tree/main/examples)            |
 | Release history                         | [CHANGELOG.md](https://github.com/amigo-ai/amigo-typescript-sdk/blob/main/CHANGELOG.md)     |
+
+The docs site remains the primary reference. The repo-local examples stay close to the shipped package surface and are validated in CI.
 
 ## Installation
 
