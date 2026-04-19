@@ -13,11 +13,8 @@ const mockOrganizationResponse: components['schemas']['organization__get_organiz
   {
     org_id: 'test-org',
     org_name: 'Test Organization',
-    title: 'Welcome to Test Org',
-    main_description: 'This is a test organization for API testing',
-    sub_description: 'Built with Amigo AI platform',
-    onboarding_instructions: ['Step 1: Welcome', 'Step 2: Setup'],
     default_user_preferences: null,
+    tenant_id: null,
   }
 
 // MSW server setup
