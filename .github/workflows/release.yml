@@ -12,6 +12,16 @@ on:
           - patch
           - minor
           - major
+          - prerelease
+      preid:
+        description: 'Pre-release identifier to use when version_type is prerelease'
+        required: false
+        default: 'rc'
+        type: choice
+        options:
+          - rc
+          - beta
+          - alpha
       dry_run:
         description: 'Dry run (skip publish, commits, tags)'
         required: false
@@ -21,10 +31,15 @@ on:
   workflow_call:
     inputs:
       version_type:
-        description: 'Version increment type (patch|minor|major)'
+        description: 'Version increment type (patch|minor|major|prerelease)'
         required: true
         type: string
         default: 'patch'
+      preid:
+        description: 'Pre-release identifier to use when version_type is prerelease'
+        required: false
+        type: string
+        default: 'rc'
       dry_run:
         description: 'Dry run (skip upload)'
         required: false
@@ -111,18 +126,38 @@ jobs:
       - name: Increment version
         id: new_version
         run: |
-          echo "🔄 Incrementing ${{ inputs.version_type }} version..."
+          VERSION_TYPE="${{ inputs.version_type }}"
+          PREID="${{ inputs.preid }}"
+          if [ "$VERSION_TYPE" = "prerelease" ]; then
+            VERSION_CMD=(npm version prerelease --preid "$PREID" --no-git-tag-version)
+            echo "🔄 Incrementing prerelease version with preid '$PREID'..."
+          else
+            VERSION_CMD=(npm version "$VERSION_TYPE" --no-git-tag-version)
+            echo "🔄 Incrementing $VERSION_TYPE version..."
+          fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            NEW_VERSION=$(npm version ${{ inputs.version_type }} --no-git-tag-version --dry-run)
+            VERSION_CMD+=(--dry-run)
+            NEW_VERSION=$("${VERSION_CMD[@]}")
             NEW_VERSION=${NEW_VERSION#v}
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "✅ (dry-run) Version would be: ${{ steps.current_version.outputs.version }} → $NEW_VERSION"
           else
-            npm version ${{ inputs.version_type }} --no-git-tag-version
+            "${VERSION_CMD[@]}"
             NEW_VERSION=$(node -p "require('./package.json').version")
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "✅ Version updated: ${{ steps.current_version.outputs.version }} → $NEW_VERSION"
           fi
+
+      - name: Resolve npm dist-tag
+        id: npm_tag
+        run: |
+          if [[ "${{ steps.new_version.outputs.version }}" == *-* ]]; then
+            DIST_TAG="${{ inputs.preid }}"
+          else
+            DIST_TAG="latest"
+          fi
+          echo "tag=$DIST_TAG" >> $GITHUB_OUTPUT
+          echo "Using npm dist-tag: $DIST_TAG"
 
       - name: Build package
         run: |
@@ -148,8 +183,8 @@ jobs:
         run: |
           echo "🔄 Publishing to npm..."
           FILE="${{ steps.pack.outputs.file }}"
-          npm publish "$FILE" --provenance --access public
-          echo "✅ Package published to npm"
+          npm publish "$FILE" --provenance --access public --tag "${{ steps.npm_tag.outputs.tag }}"
+          echo "✅ Package published to npm with dist-tag '${{ steps.npm_tag.outputs.tag }}'"
 
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
