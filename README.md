@@ -4,7 +4,7 @@
 
 <h1 align="center">@amigo-ai/sdk</h1>
 
-<p align="center">Official TypeScript SDK for the Classic Amigo API.</p>
+<p align="center">Official TypeScript SDK for the Amigo classic and Platform APIs.</p>
 
 <p align="center">
   <a href="https://docs.amigo.ai">Product Docs</a>
@@ -25,26 +25,28 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" /></a>
 </p>
 
-Typed from the committed Classic OpenAPI snapshot, shipped as ESM and CommonJS, and used by existing org-scoped integrations on the original Amigo backend at `api.amigo.ai`.
+Typed from the Amigo OpenAPI schemas, shipped as ESM and CommonJS, and used by existing org-scoped integrations on the original Amigo backend at `api.amigo.ai` plus new workspace-scoped integrations on `api.platform.amigo.ai`.
 
-## Classic Backend Context
+## Backend Context
 
-`@amigo-ai/sdk` targets the original org-scoped Amigo backend. Existing deployments still use this surface for conversations, services, organizations, users, agents, context graphs, webhooks, and streaming events.
+The root package export targets the original org-scoped Classic API. Existing deployments still use this surface for conversations, services, organizations, users, agents, context graphs, webhooks, and streaming events.
 
 ![Classic text session flow](./assets/readme/classic-session-flow.svg)
 
+The `@amigo-ai/sdk/platform` subpath targets the Platform API. It includes a raw OpenAPI-typed fetch client, workspace-scoped resources, SSE helpers for streaming turns and workspace events, and WebSocket helpers for public text sessions.
+
 ## Product Status
 
-`@amigo-ai/sdk` remains the supported TypeScript client for the Classic API.
+`@amigo-ai/sdk` remains the supported TypeScript client for the Classic API and now also ships the Platform API client from the `@amigo-ai/sdk/platform` subpath.
 
-The Platform API is where new workspace-scoped capabilities land first, but the Classic API is not being switched off abruptly. Amigo will publish a migration path, compatibility notes, and upgrade guidance before asking customers to move production workloads.
+The Platform API is where new workspace-scoped capabilities land first, but the Classic API is not being switched off abruptly. The root export continues to target the current org-scoped API, while new Platform integrations can use the platform subpath from the same package.
 
 ## Choose The Right SDK
 
-| If you need                                                  | Start here                                                                            |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| Existing org-scoped integrations on `api.amigo.ai`           | `@amigo-ai/sdk`                                                                       |
-| New workspace-scoped integrations on `api.platform.amigo.ai` | [`@amigo-ai/platform-sdk`](https://github.com/amigo-ai/amigo-platform-typescript-sdk) |
+| If you need                                                  | Start here                |
+| ------------------------------------------------------------ | ------------------------- |
+| Existing org-scoped integrations on `api.amigo.ai`           | `@amigo-ai/sdk`           |
+| New workspace-scoped integrations on `api.platform.amigo.ai` | `@amigo-ai/sdk/platform`  |
 
 ## Documentation
 
@@ -64,7 +66,7 @@ The docs site remains the primary reference. The repo-local examples stay close 
 npm install @amigo-ai/sdk
 ```
 
-## Quick Start
+## Classic Quick Start
 
 ```typescript
 import { AmigoClient } from '@amigo-ai/sdk'
@@ -84,6 +86,20 @@ const conversations = await client.conversations.getConversations({
 console.log(conversations.conversations.map(conversation => conversation.id))
 ```
 
+## Platform Quick Start
+
+```typescript
+import { PlatformClient } from '@amigo-ai/sdk/platform'
+
+const platform = new PlatformClient({
+  apiKey: 'your-platform-api-key',
+  workspaceId: 'your-workspace-id',
+})
+
+const agents = await platform.agents.list({ query: { limit: 10 } })
+console.log(agents.items.map(agent => agent.id))
+```
+
 ## Configuration
 
 | Option     | Type           | Required | Description                                                   |
@@ -91,7 +107,7 @@ console.log(conversations.conversations.map(conversation => conversation.id))
 | `apiKey`   | `string`       | Yes      | API key from the Amigo dashboard                              |
 | `apiKeyId` | `string`       | Yes      | API key ID paired with `apiKey`                               |
 | `userId`   | `string`       | Yes      | User ID on whose behalf the request is made                   |
-| `orgId`    | `string`       | Yes      | Organization ID for the classic API                           |
+| `orgId`    | `string`       | Yes      | Organization ID for the Classic API                           |
 | `baseUrl`  | `string`       | No       | Override the API base URL. Defaults to `https://api.amigo.ai` |
 | `retry`    | `RetryOptions` | No       | Retry policy overrides for transient HTTP failures            |
 
@@ -110,10 +126,19 @@ type Conversation = components['schemas']['ConversationInstance']
 type GetConversationsQuery = operations['get-conversations']['parameters']['query']
 ```
 
-Public builds are generated from the committed [`specs/openapi-baseline.json`](./specs/openapi-baseline.json) snapshot in this repo so type output stays deterministic across machines and CI runs. When you need to refresh that snapshot, run:
+Public Classic builds are generated from the committed [`specs/openapi-baseline.json`](./specs/openapi-baseline.json) snapshot in this repo so type output stays deterministic across machines and CI runs. When you need to refresh that snapshot, run:
 
 ```bash
 npm run openapi:sync
+```
+
+Platform OpenAPI types are exported from the platform subpath:
+
+```typescript
+import type { components, operations, paths } from '@amigo-ai/sdk/platform'
+
+type PlatformAgent = components['schemas']['AgentResponse']
+type ListAgentsQuery = operations['list-agents']['parameters']['query']
 ```
 
 ## Retries
