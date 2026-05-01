@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest'
 import {
   extractData,
   parseNdjsonStream,
+  parseSseStream,
   parseResponseBody,
   isNetworkError,
 } from '../src/core/utils'
@@ -12,6 +13,16 @@ function createNdjsonStream(lines: string[]): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
     start(controller) {
       for (const line of lines) controller.enqueue(encoder.encode(line))
+      controller.close()
+    },
+  })
+}
+
+function createTextStream(chunks: string[]): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder()
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk))
       controller.close()
     },
   })
@@ -86,6 +97,40 @@ describe('parseNdjsonStream', () => {
       out.push(obj)
     }
     expect(out).toEqual([])
+  })
+})
+
+describe('parseSseStream', () => {
+  test('yields parsed JSON server-sent events', async () => {
+    const stream = createTextStream([
+      'retry: 3000\n\n',
+      'id: 1\nevent: token\ndata: {"type":"token","token":"hi"}\n\n',
+      'id: 2\nevent: done\ndata: {"type":"done"}\n\n',
+    ])
+    const response = new Response(stream, { headers: { 'Content-Type': 'text/event-stream' } })
+    const out: unknown[] = []
+    for await (const event of parseSseStream(response)) {
+      out.push(event)
+    }
+    expect(out).toEqual([
+      { id: '1', event: 'token', data: { type: 'token', token: 'hi' } },
+      { id: '2', event: 'done', data: { type: 'done' } },
+    ])
+  })
+
+  test('handles multiline text data and comments', async () => {
+    const stream = createTextStream([
+      ': heartbeat\n',
+      'event: message\r\n',
+      'data: hello\r\n',
+      'data: world\r\n\r\n',
+    ])
+    const response = new Response(stream)
+    const out: unknown[] = []
+    for await (const event of parseSseStream(response)) {
+      out.push(event)
+    }
+    expect(out).toEqual([{ event: 'message', data: 'hello\nworld' }])
   })
 })
 

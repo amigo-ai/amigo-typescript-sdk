@@ -7,8 +7,15 @@ config()
 
 /**
  * Integration tests for AmigoClient against real API endpoints.
- * These tests are skipped by default and should only be run manually during demos.
+ * These tests require valid API credentials via environment variables.
+ * They are skipped automatically when credentials are not configured.
  */
+
+const hasCredentials =
+  process.env.AMIGO_API_KEY &&
+  process.env.AMIGO_API_KEY_ID &&
+  process.env.AMIGO_USER_ID &&
+  process.env.AMIGO_ORGANIZATION_ID
 
 // Real API configuration - these should be valid credentials for testing
 const testConfig = {
@@ -19,7 +26,7 @@ const testConfig = {
   baseUrl: process.env.AMIGO_BASE_URL || 'https://internal-api.amigo.ai',
 }
 
-describe('Integration Tests - Real API', () => {
+describe.skipIf(!hasCredentials)('Integration Tests - Real API', () => {
   let client: AmigoClient
 
   test('should get organization data successfully', async () => {
