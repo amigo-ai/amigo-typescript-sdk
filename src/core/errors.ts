@@ -87,17 +87,63 @@ export class AmigoError extends Error {
   }
 }
 
+type AmigoErrorOptions = NonNullable<ConstructorParameters<typeof AmigoError>[1]>
+
+function isAmigoErrorOptions(value: unknown): value is AmigoErrorOptions {
+  if (!value || typeof value !== 'object') return false
+  const options = value as Record<string, unknown>
+  return (
+    ('statusCode' in options &&
+      (typeof options.statusCode === 'number' || options.statusCode === undefined)) ||
+    ('errorCode' in options &&
+      (typeof options.errorCode === 'string' || options.errorCode === undefined)) ||
+    ('context' in options && (typeof options.context === 'object' || options.context === undefined))
+  )
+}
+
 /* 4xx client errors */
-export class BadRequestError extends AmigoError {}
-export class AuthenticationError extends AmigoError {}
-export class PermissionError extends AmigoError {}
-export class NotFoundError extends AmigoError {}
-export class ConflictError extends AmigoError {}
-export class RateLimitError extends AmigoError {}
+export class BadRequestError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 400 })
+  }
+}
+export class AuthenticationError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 401 })
+  }
+}
+export class PermissionError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 403 })
+  }
+}
+export class NotFoundError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 404 })
+  }
+}
+export class ConflictError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 409 })
+  }
+}
+export class RateLimitError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 429 })
+  }
+}
 
 /* 5xx server errors */
-export class ServerError extends AmigoError {}
-export class ServiceUnavailableError extends ServerError {}
+export class ServerError extends AmigoError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 500 })
+  }
+}
+export class ServiceUnavailableError extends ServerError {
+  constructor(message: string, options?: AmigoErrorOptions) {
+    super(message, { ...options, statusCode: options?.statusCode ?? 503 })
+  }
+}
 
 /* Internal SDK errors */
 export class ConfigurationError extends AmigoError {
@@ -113,9 +159,19 @@ export class ConfigurationError extends AmigoError {
 export class ValidationError extends BadRequestError {
   constructor(
     msg: string,
+    optionsOrFieldErrors?: AmigoErrorOptions | Record<string, string>,
     public fieldErrors?: Record<string, string>
   ) {
-    super(msg)
+    const isErrorOptions = isAmigoErrorOptions(optionsOrFieldErrors)
+    super(
+      msg,
+      isErrorOptions
+        ? { ...optionsOrFieldErrors, statusCode: optionsOrFieldErrors.statusCode ?? 422 }
+        : { statusCode: 422 }
+    )
+    this.fieldErrors = isErrorOptions
+      ? fieldErrors
+      : (optionsOrFieldErrors as Record<string, string> | undefined)
   }
 }
 

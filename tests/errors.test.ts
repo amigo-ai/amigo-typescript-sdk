@@ -28,6 +28,9 @@ describe('SDK Error Tests', () => {
       const error = createApiError(response)
       expect(error).toBeInstanceOf(expectedType)
       expect(error.message).toContain(statusText)
+      if (expectedType !== AmigoError) {
+        expect(error.statusCode).toBe(status)
+      }
     })
 
     // Test with JSON body
@@ -73,11 +76,20 @@ describe('SDK Error Tests', () => {
     expect(validationError instanceof ValidationError).toBe(true)
     expect(validationError instanceof BadRequestError).toBe(true)
     expect(validationError instanceof AmigoError).toBe(true)
+    expect(validationError.statusCode).toBe(422)
 
     const serviceError = new ServiceUnavailableError('Service down')
     expect(serviceError instanceof ServiceUnavailableError).toBe(true)
     expect(serviceError instanceof ServerError).toBe(true)
     expect(serviceError instanceof AmigoError).toBe(true)
+    expect(serviceError.statusCode).toBe(503)
+  })
+
+  test('directly constructed HTTP error subclasses carry default status codes', () => {
+    expect(new BadRequestError('bad').statusCode).toBe(400)
+    expect(new AuthenticationError('unauthorized').statusCode).toBe(401)
+    expect(new ServiceUnavailableError('unavailable').statusCode).toBe(503)
+    expect(new ServerError('custom', { statusCode: 502 }).statusCode).toBe(502)
   })
 
   test('specialized error constructors work correctly', () => {

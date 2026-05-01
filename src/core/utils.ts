@@ -66,6 +66,112 @@ export async function* parseNdjsonStream<T = unknown>(response: Response): Async
   }
 }
 
+export interface ServerSentEvent<T = unknown> {
+  id?: string
+  event?: string
+  data: T | string
+  retry?: number
+}
+
+/**
+ * Parse an SSE HTTP response body into an async generator of parsed events.
+ * JSON data payloads are parsed; non-JSON payloads are returned as strings.
+ */
+export async function* parseSseStream<T = unknown>(
+  response: Response
+): AsyncGenerator<ServerSentEvent<T>> {
+  const body = response.body
+  if (!body) return
+
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let bufferedText = ''
+  let eventId: string | undefined
+  let eventName: string | undefined
+  let retry: number | undefined
+  let dataLines: string[] = []
+
+  const flushEvent = function* (): Generator<ServerSentEvent<T>> {
+    if (dataLines.length === 0) {
+      eventName = undefined
+      retry = undefined
+      return
+    }
+
+    const rawData = dataLines.join('\n')
+    let data: T | string = rawData
+    try {
+      data = JSON.parse(rawData) as T
+    } catch {
+      // SSE allows plain text data frames.
+    }
+
+    const event: ServerSentEvent<T> = { data }
+    if (eventId !== undefined) event.id = eventId
+    if (eventName !== undefined) event.event = eventName
+    if (retry !== undefined) event.retry = retry
+
+    eventName = undefined
+    retry = undefined
+    dataLines = []
+    yield event
+  }
+
+  const processLine = function* (line: string): Generator<ServerSentEvent<T>> {
+    if (line === '') {
+      yield* flushEvent()
+      return
+    }
+    if (line.startsWith(':')) return
+
+    const colonIndex = line.indexOf(':')
+    const field = colonIndex === -1 ? line : line.slice(0, colonIndex)
+    const value = colonIndex === -1 ? '' : line.slice(colonIndex + 1).replace(/^ /, '')
+
+    switch (field) {
+      case 'id':
+        eventId = value
+        break
+      case 'event':
+        eventName = value
+        break
+      case 'data':
+        dataLines.push(value)
+        break
+      case 'retry': {
+        const retryMs = Number.parseInt(value, 10)
+        if (!Number.isNaN(retryMs)) retry = retryMs
+        break
+      }
+    }
+  }
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      bufferedText += decoder.decode(value, { stream: true })
+
+      let newlineIndex: number
+      while ((newlineIndex = bufferedText.search(/\r?\n/)) !== -1) {
+        const line = bufferedText.slice(0, newlineIndex)
+        const newlineLength =
+          bufferedText[newlineIndex] === '\r' && bufferedText[newlineIndex + 1] === '\n' ? 2 : 1
+        bufferedText = bufferedText.slice(newlineIndex + newlineLength)
+        yield* processLine(line)
+      }
+    }
+
+    const trailing = bufferedText.trimEnd()
+    if (trailing) {
+      yield* processLine(trailing)
+    }
+    yield* flushEvent()
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 // Utility function to safely parse response bodies without throwing errors
 export async function parseResponseBody(response: Response): Promise<unknown> {
   try {
