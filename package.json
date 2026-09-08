@@ -1,6 +1,6 @@
 {
   "name": "@amigo-ai/sdk",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Official TypeScript SDK for the Classic Amigo API at api.amigo.ai",
   "keywords": [
     "amigo",
