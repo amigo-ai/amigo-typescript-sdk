@@ -25,7 +25,9 @@ async function loadSpec() {
 
   const response = await fetch(specUrl)
   if (!response.ok) {
-    throw new Error(`Failed to fetch OpenAPI schema: HTTP ${response.status} ${response.statusText}`)
+    throw new Error(
+      `Failed to fetch OpenAPI schema: HTTP ${response.status} ${response.statusText}`
+    )
   }
 
   return response.json()

@@ -81,3 +81,5 @@ artifacts/
 
 # Local OpenAPI snapshots
 openapi-new.json
+# Generated TypeDoc site
+/docs/

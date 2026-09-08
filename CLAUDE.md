@@ -52,7 +52,8 @@ tests/
   dist/                 — Distribution compatibility tests (run after build)
   integration/          — Integration tests (require real API credentials)
 scripts/
-  gen.mjs               — Fetches OpenAPI spec and generates src/generated/api-types.ts
+  gen.mjs               — Generates src/generated/api-types.ts from the committed OpenAPI snapshot
+  sync-openapi.mjs       — Explicitly refreshes the committed OpenAPI snapshot from the API
   build.mjs             — esbuild bundler producing ESM (.mjs) and CJS (.cjs) in dist/
   generate-changelog.sh — Generates categorized changelog entries from conventional commits
 benchmarks/
@@ -96,4 +97,4 @@ Files in `src/generated/` are auto-generated from the Amigo OpenAPI spec. Do not
 npm run gen-types
 ```
 
-This fetches the latest spec and runs `openapi-typescript` to produce `src/generated/api-types.ts`.
+This runs `openapi-typescript` against `specs/openapi-baseline.json` to produce `src/generated/api-types.ts`. Use `npm run openapi:sync` explicitly when reviewing an upstream contract refresh; ordinary builds do not fetch a new schema.

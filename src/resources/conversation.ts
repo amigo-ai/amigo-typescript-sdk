@@ -4,7 +4,7 @@ import { extractData, parseNdjsonStream } from '../core/utils'
 import type { components, operations } from '../generated/api-types'
 import type { ConversationId, InteractionId, MessageId, OrgId } from '../core/branded-types'
 
-type VoiceData = Blob | Uint8Array | ReadableStream<Uint8Array>
+export type VoiceData = Blob | Uint8Array | ReadableStream<Uint8Array>
 export type InteractionInput = string | VoiceData
 
 type InteractQuery = operations['interact-with-conversation']['parameters']['query']

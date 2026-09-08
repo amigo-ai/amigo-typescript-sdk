@@ -72,6 +72,16 @@ function validateConfig(config: AmigoSdkConfig) {
   return config
 }
 
+// Resource classes are public so their methods appear in the generated API reference.
+export {
+  AgentResource,
+  ContextGraphResource,
+  ConversationResource,
+  OrganizationResource,
+  ServiceResource,
+  UserResource,
+}
+
 // Export error classes individually (not as namespace)
 export {
   AmigoError,
@@ -99,7 +109,7 @@ export { parseRateLimitHeaders } from './core/rate-limit'
 
 // Export retry and interaction types
 export type { RetryOptions } from './core/retry'
-export type { InteractionInput } from './resources/conversation'
+export type { InteractionInput, VoiceData } from './resources/conversation'
 
 // Re-export useful types for consumers
 export type { components, operations, paths } from './generated/api-types'
