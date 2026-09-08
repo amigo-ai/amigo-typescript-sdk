@@ -34,7 +34,6 @@ on:
         description: 'Version increment type (patch|minor|major|prerelease)'
         required: true
         type: string
-        default: 'patch'
       preid:
         description: 'Pre-release identifier to use when version_type is prerelease'
         required: false
@@ -49,7 +48,7 @@ on:
         description: 'OpenAPI spec URL to baseline (optional)'
         required: false
         type: string
-        default: 'https://api.amigo.ai/v1/openapi.json'
+        default: ''
 
 permissions:
   contents: write
@@ -111,19 +110,12 @@ jobs:
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
 
-      - name: Generate models
-        run: |
-          echo "🔄 Generating models from API spec..."
-          node scripts/gen.mjs
-          echo "✅ Models generated successfully"
-
       - name: Fetch OpenAPI spec
+        if: inputs.spec_url != ''
         id: fetch_spec
+        env:
+          SPEC_URL: ${{ inputs.spec_url }}
         run: |
-          SPEC_URL="${{ inputs.spec_url }}"
-          if [ -z "$SPEC_URL" ]; then
-            SPEC_URL="https://api.amigo.ai/v1/openapi.json"
-          fi
           echo "spec_url=$SPEC_URL" >> $GITHUB_OUTPUT
           curl -fSL -o openapi-new.json "$SPEC_URL"
           mkdir -p specs
@@ -257,6 +249,12 @@ jobs:
           echo "✅ Package built successfully"
           ls -la dist/
 
+      - name: Validate release package
+        run: |
+          npm run lint
+          npm test
+          npm run test:dist
+
       - name: Pack tarball
         id: pack
         run: |
@@ -279,7 +277,7 @@ jobs:
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
-          git add package.json package-lock.json specs/openapi-baseline.json CHANGELOG.md || true
+          git add package.json package-lock.json specs/openapi-baseline.json src/generated/api-types.ts CHANGELOG.md
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
 

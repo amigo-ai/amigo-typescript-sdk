@@ -8,16 +8,15 @@ Thank you for contributing to `@amigo-ai/sdk`. This repository ships the classic
 2. Install dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 
 ## Scripts
 
 ### Build And Codegen
 
-- `npm run gen-types` regenerates all generated types
-- `npm run gen-types:classic` regenerates classic API types
-- `npm run gen-types:platform` regenerates platform migration types
+- `npm run gen-types` regenerates Classic API types from `specs/openapi-baseline.json`
+- `npm run openapi:sync` refreshes that snapshot from the public Classic API
 - `npm run build` runs codegen, bundles with esbuild, and emits declarations
 - `npm run dev` runs the build in watch mode
 - `npm run docs` rebuilds the published TypeDoc output
@@ -40,6 +39,7 @@ npm install
 This repository uses Vitest.
 
 ```bash
+npm run build
 npm test
 npm run test:dist
 npm run test:integration
@@ -50,10 +50,7 @@ Integration tests require valid Amigo API credentials in the environment.
 
 ## Type Generation
 
-Code generation is intentionally split:
-
-- Classic API output is generated into `src/generated/`
-- Platform migration output is generated into `src/generated/platform-api-types.ts`
+Code generation reads the committed Classic API snapshot and writes `src/generated/api-types.ts`. Platform types and resources belong to the separate [Platform SDK](https://github.com/amigo-ai/amigo-platform-typescript-sdk). Builds do not fetch a newer API schema unless you explicitly run `openapi:sync`.
 
 Never edit generated files manually.
 
@@ -63,7 +60,6 @@ Never edit generated files manually.
 src/
 ├── core/            # auth, errors, retry, helpers
 ├── generated/       # generated classic OpenAPI types
-├── platform/        # platform migration resources and types
 ├── resources/       # classic API resources
 └── index.ts         # public package entry point
 
@@ -74,9 +70,8 @@ tests/
 
 scripts/
 ├── build.mjs
-├── gen-all.mjs
-├── gen-classic.mjs
-└── gen-platform.mjs
+├── gen.mjs
+└── sync-openapi.mjs
 ```
 
 ## Pull Requests

@@ -64,6 +64,10 @@ The docs site remains the primary reference. The repo-local examples stay close 
 npm install @amigo-ai/sdk
 ```
 
+Before making requests, obtain Classic organization credentials and a user authorized to read the target resources. Keep API keys in server-side environment variables or a secret manager. The examples below read conversation data; they require access to an existing organization.
+
+For the 2.0.0 generated-model changes, review the [current SDK upgrade guidance](https://docs.amigo.ai/api-reference/change-logs/sdk-ecosystem#september-2026-compatibility-releases) and recheck the package registry when choosing a version.
+
 ## Quick Start
 
 ```typescript

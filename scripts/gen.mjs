@@ -26,7 +26,7 @@ function resolveSpecSource() {
   }
 
   throw new Error(
-    'No committed OpenAPI snapshot found at specs/openapi-baseline.json. Run `npm run openapi:sync` first.',
+    'No committed OpenAPI snapshot found at specs/openapi-baseline.json. Run `npm run openapi:sync` first.'
   )
 }
 
@@ -80,7 +80,7 @@ function patchOpenApiDocument(schema) {
       if (seenOperationIds.has(operationId)) {
         const nextOperationId = `${operationId}-${method}`
         console.warn(
-          `Fixing duplicate operationId: ${operationId} -> ${nextOperationId} (${method.toUpperCase()} ${pathKey})`,
+          `Fixing duplicate operationId: ${operationId} -> ${nextOperationId} (${method.toUpperCase()} ${pathKey})`
         )
         operation.operationId = nextOperationId
       } else {
