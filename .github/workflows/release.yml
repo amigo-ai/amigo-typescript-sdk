@@ -272,6 +272,12 @@ jobs:
           echo "✅ Tarball created: $FILE"
           ls -la "$FILE"
 
+      - name: Stage release metadata
+        if: ${{ !inputs.dry_run }}
+        # Generated types are intentionally ignored and rebuilt from the snapshot.
+        # Fail staging before publishing an immutable package version.
+        run: git add package.json package-lock.json specs/openapi-baseline.json CHANGELOG.md
+
       - name: Publish to npm
         if: ${{ !inputs.dry_run }}
         env:
@@ -285,7 +291,6 @@ jobs:
       - name: Commit version bump
         if: ${{ !inputs.dry_run }}
         run: |
-          git add package.json package-lock.json specs/openapi-baseline.json src/generated/api-types.ts CHANGELOG.md
           git commit -m "Bump version to ${{ steps.new_version.outputs.version }}"
           git push origin HEAD
 

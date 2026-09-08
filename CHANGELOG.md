@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.0] - 2026-09-08
+
+### Features
+
+- Expose documented resources and harden package releases ([#62](https://github.com/amigo-ai/amigo-typescript-sdk/pull/62)).
+
 ## [2.0.0] - 2026-09-08
 
 ### Bug Fixes
