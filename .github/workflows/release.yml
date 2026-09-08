@@ -62,11 +62,13 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       skip_codecov: true
-    secrets: inherit
 
   release:
     runs-on: ubuntu-latest
     needs: test
+    env:
+      VERSION_TYPE: ${{ inputs.version_type }}
+      PREID: ${{ inputs.preid }}
     permissions:
       contents: write
       id-token: write
@@ -124,8 +126,14 @@ jobs:
       - name: Increment version
         id: new_version
         run: |
-          VERSION_TYPE="${{ inputs.version_type }}"
-          PREID="${{ inputs.preid }}"
+          case "$VERSION_TYPE" in
+            patch|minor|major|prerelease) ;;
+            *) echo "::error::Unsupported version type"; exit 1 ;;
+          esac
+          case "$PREID" in
+            rc|beta|alpha) ;;
+            *) echo "::error::Unsupported prerelease identifier"; exit 1 ;;
+          esac
           if [ "$VERSION_TYPE" = "prerelease" ]; then
             VERSION_CMD=(npm version prerelease --preid "$PREID" --no-git-tag-version)
             echo "🔄 Incrementing prerelease version with preid '$PREID'..."
@@ -150,7 +158,7 @@ jobs:
         id: npm_tag
         run: |
           if [[ "${{ steps.new_version.outputs.version }}" == *-* ]]; then
-            DIST_TAG="${{ inputs.preid }}"
+            DIST_TAG="$PREID"
           else
             DIST_TAG="latest"
           fi
